@@ -1,6 +1,5 @@
 import streamlit as st
-import pandas as pd
-from streamlit_gsheets import GSheetsConnection
+import requests
 
 # Set up page layout
 st.set_page_config(page_title="Class Investment Dashboard", layout="centered")
@@ -22,12 +21,9 @@ STUDENT_DB = {
     "user149": "moss9",   "user150": "vine1"
 }
 
-# 2. SPREADSHEET CONFIGURATION
-# 🔴 Paste your actual Google Sheet sharing URL or ID inside the quotes below:
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1zn9AQFSMaB5lKRR-FTKJ07SQP8MGaRYH5nrVwBc0uzc/edit?usp=sharing"
-
-# Initialize Google Sheets Connection
-conn = st.connection("gsheets", type=GSheetsConnection)
+# 2. WEB APP MACRO LINK
+# 🔴 PASTE YOUR COPIED GOOGLE WEB APP URL HERE:
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-9n2foZ57LRw6WM-C6CRYewWTy-cv6ftMZ-dTqSr4zRZ1Q8mvHgT3TPq1CLeVOdrY/exec"
 
 # 3. SESSION STATE INITIALIZATION
 if "logged_in" not in st.session_state:
@@ -88,7 +84,6 @@ else:
     m1.metric("Total Bank Balance", "$100,000")
     m2.metric("Total Invested", f"${total_allocated:,.2f}")
     
-    # Check balance status and show appropriate warnings
     if remaining_balance < 0:
         m3.metric("Remaining Cash", f"${remaining_balance:,.2f}", delta="OVER BUDGET", delta_color="inverse")
         st.error(f"🚨 You are over budget! Please reduce your allocations by ${abs(remaining_balance):,.2f}.")
@@ -104,21 +99,11 @@ else:
 
     st.markdown("---")
 
-    # The button is disabled unless the remaining balance is exactly 0
     if st.button("🚀 Finalise Investment", type="primary", use_container_width=True, disabled=not is_ready_to_submit):
-        with st.spinner("Connecting to master sheet and saving your choices..."):
+        with st.spinner("Submitting your secure investment matrix directly to Google Sheets..."):
             try:
-                # 1. Pull current data from the shared sheet
-                df = conn.read(spreadsheet=SPREADSHEET_URL, ttl=0)
-                
-                if df.empty or "Student" not in df.columns:
-                    df = pd.DataFrame(columns=["Student", "Company A", "Company B", "Company C", "Company D", "Company E", "Company F"])
-
-                df["Student"] = df["Student"].astype(str).str.strip().str.lower()
-                current_user = st.session_state.username.strip().lower()
-
-                # 2. Build the new data row
-                new_data = {
+                # Pack the payload up cleanly
+                payload = {
                     "Student": st.session_state.username,
                     "Company A": allocations["Company A"],
                     "Company B": allocations["Company B"],
@@ -127,24 +112,18 @@ else:
                     "Company E": allocations["Company E"],
                     "Company F": allocations["Company F"]
                 }
-
-                # 3. Overwrite existing data or append as a new entry
-                if current_user in df["Student"].values:
-                    idx = df[df["Student"] == current_user].index[0]
-                    for col, val in new_data.items():
-                        df.at[idx, col] = val
-                    msg = "📝 Your existing investment selections have been updated!"
-                else:
-                    new_row_df = pd.DataFrame([new_data])
-                    df = pd.concat([df, new_row_df], ignore_index=True)
-                    msg = "🎯 Investment successfully completed! Your allocations have been registered."
-
-                # 4. Push data back to Google Sheets
-                conn.update(spreadsheet=SPREADSHEET_URL, data=df)
-                st.success(msg)
                 
+                # Push via direct API post request
+                response = requests.post(WEB_APP_URL, json=payload, timeout=10)
+                result = response.json()
+                
+                if response.status_code == 200 and result.get("status") == "success":
+                    st.success("🎯 Investment successfully completed! Your allocations have been registered/updated in the class database.")
+                else:
+                    st.error(f"Spreadsheet script error: {result.get('message', 'Unknown issue')}")
+                    
             except Exception as ex:
-                st.error(f"Failed to submit data to the sheet. Verify spreadsheet link access permissions. Details: {ex}")
+                st.error(f"Network error trying to contact the data pipeline. Make sure you updated your WEB_APP_URL inside the script! Details: {ex}")
 
     if st.sidebar.button("Log Out"):
         st.session_state.logged_in = False
