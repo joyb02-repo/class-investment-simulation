@@ -30,10 +30,12 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = ""
+if "existing_allocations" not in st.session_state:
+    st.session_state.existing_allocations = None
 
 # --- LOGIN SCREEN ---
 if not st.session_state.logged_in:
-    st.title("🔐 Student Login Portal")
+    st.title("Student Login Portal")
     st.markdown("Please enter your pre-allocated credentials to access the simulation.")
     
     username_input = st.text_input("Username").strip().lower()
@@ -41,8 +43,19 @@ if not st.session_state.logged_in:
     
     if st.button("Login", use_container_width=True):
         if username_input in STUDENT_DB and STUDENT_DB[username_input] == password_input:
-            st.session_state.logged_in = True
             st.session_state.username = username_input
+            
+            # Ping Google Sheets to pull any existing allocations for this student
+            with st.spinner("Checking your balance in the database..."):
+                try:
+                    response = requests.get(WEB_APP_URL, params={"student": username_input}, timeout=10)
+                    res_data = response.json()
+                    if res_data.get("status") == "success":
+                        st.session_state.existing_allocations = res_data.get("record")
+                except Exception as e:
+                    st.warning("Could not sync with live balance history. Defaulting to fresh session.")
+            
+            st.session_state.logged_in = True
             st.rerun()
         else:
             st.error("Invalid username or password. Please try again.")
@@ -56,8 +69,14 @@ else:
     STARTING_BALANCE = 100000.00
     companies = ["Company A", "Company B", "Company C", "Company D", "Company E", "Company F"]
 
-    st.write("### 🏦 Your Portfolio Allocations")
-    st.write("You must allocate **exactly $100,000** across the companies before you can submit.")
+    # Pre-populate defaults if they have already made a submission
+    defaults = st.session_state.existing_allocations if st.session_state.existing_allocations else {}
+
+    if defaults:
+        st.info("ℹ️ You have already submitted investments! Your current portfolio is loaded below. You can adjust your values and finalize again to update your choices.")
+    else:
+        st.write("### 🏦 Your Portfolio Allocations")
+        st.write("You must allocate **exactly $100,000** across the companies before you can submit.")
 
     # Create input boxes dynamically
     allocations = {}
@@ -66,12 +85,15 @@ else:
     col1, col2 = st.columns(2)
     for idx, company in enumerate(companies):
         with col1 if idx % 2 == 0 else col2:
+            # Look up historical values from the sheet, default to 0.0 if new student
+            initial_val = float(defaults.get(company, 0.0))
+            
             amount = st.number_input(
                 f"Allocation for {company} ($)", 
                 min_value=0.0, 
                 max_value=100000.0, 
                 step=1000.0, 
-                value=0.0,
+                value=initial_val,
                 key=f"input_{company}"
             )
             allocations[company] = amount
@@ -102,7 +124,6 @@ else:
     if st.button("🚀 Finalise Investment", type="primary", use_container_width=True, disabled=not is_ready_to_submit):
         with st.spinner("Submitting your secure investment matrix directly to Google Sheets..."):
             try:
-                # Pack the payload up cleanly
                 payload = {
                     "Student": st.session_state.username,
                     "Company A": allocations["Company A"],
@@ -113,19 +134,21 @@ else:
                     "Company F": allocations["Company F"]
                 }
                 
-                # Push via direct API post request
                 response = requests.post(WEB_APP_URL, json=payload, timeout=10)
                 result = response.json()
                 
                 if response.status_code == 200 and result.get("status") == "success":
                     st.success("🎯 Investment successfully completed! Your allocations have been registered/updated in the class database.")
+                    # Keep track of the new configuration inside session state to prevent refresh loops
+                    st.session_state.existing_allocations = allocations
                 else:
                     st.error(f"Spreadsheet script error: {result.get('message', 'Unknown issue')}")
                     
             except Exception as ex:
-                st.error(f"Network error trying to contact the data pipeline. Make sure you updated your WEB_APP_URL inside the script! Details: {ex}")
+                st.error(f"Network error trying to contact the data pipeline. Details: {ex}")
 
     if st.sidebar.button("Log Out"):
         st.session_state.logged_in = False
         st.session_state.username = ""
+        st.session_state.existing_allocations = None
         st.rerun()
