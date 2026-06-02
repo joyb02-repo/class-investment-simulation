@@ -1,154 +1,167 @@
 import streamlit as st
 import requests
 
-# Set up page layout
-st.set_page_config(page_title="Class Investment Dashboard", layout="centered")
+# Page configuration
+st.set_page_config(page_title="Venture Capital Simulation", layout="centered")
 
-# 1. 50 PRE-ALLOCATED STUDENT CREDENTIALS
-STUDENT_DB = {
-    "user101": "fox32",   "user102": "bear7",   "user103": "wolf9",   "user104": "lion4",
-    "user105": "deer2",   "user106": "hawk6",   "user107": "frog5",   "user108": "duck8",
-    "user109": "swan3",   "user110": "crab1",   "user111": "fish8",   "user112": "bird4",
-    "user113": "cats9",   "user114": "dogs2",   "user115": "mice5",   "user116": "owls7",
-    "user117": "seals1",  "user118": "ants3",   "user119": "bees6",   "user120": "bugs8",
-    "user121": "blue4",   "user122": "red95",   "user123": "green2",  "user124": "pink7",
-    "user125": "gold3",   "user126": "neon6",   "user127": "aqua1",   "user128": "plum8",
-    "user129": "gray5",   "user130": "mint9",   "user131": "zinc4",   "user132": "iron2",
-    "user133": "clay7",   "user134": "rock3",   "user135": "sand5",   "user136": "wave1",
-    "user137": "wind8",   "user138": "fire6",   "user139": "star2",   "user140": "moon9",
-    "user141": "tree4",   "user142": "leaf7",   "user143": "root1",   "user144": "fern5",
-    "user145": "bark3",   "user146": "seed8",   "user147": "rose2",   "user148": "iris6",
-    "user149": "moss9",   "user150": "vine1"
-}
+# Custom UI CSS Styling
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        html, body, [data-testid="stAppViewContainer"] {
+            font-family: 'Inter', sans-serif;
+        }
+        div[data-testid="stMetricValue"] {
+            font-size: 2.2rem !important;
+            font-weight: 700 !important;
+        }
+        .main-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .main-header h1 {
+            font-weight: 700;
+            letter-spacing: -0.05rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# 2. WEB APP MACRO LINK
+# 1. WEB APP MACRO LINK
 # 🔴 PASTE YOUR COPIED GOOGLE WEB APP URL HERE:
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-9n2foZ57LRw6WM-C6CRYewWTy-cv6ftMZ-dTqSr4zRZ1Q8mvHgT3TPq1CLeVOdrY/exec"
 
-# 3. SESSION STATE INITIALIZATION
+# 2. SESSION STATE INITIALIZATION
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = ""
-if "existing_allocations" not in st.session_state:
-    st.session_state.existing_allocations = None
+if "starting_balance" not in st.session_state:
+    st.session_state.starting_balance = 0.0
+if "has_submitted" not in st.session_state:
+    st.session_state.has_submitted = False
+if "companies" not in st.session_state:
+    st.session_state.companies = []
 
 # --- LOGIN SCREEN ---
 if not st.session_state.logged_in:
-    st.title("Student Login Portal")
-    st.markdown("Please enter your pre-allocated credentials to access the simulation.")
+    st.markdown("<div class='main-header'><h1>🔐 Venture Portal</h1><p>Enter your credentials managed via Google Sheets</p></div>", unsafe_allow_html=True)
     
     username_input = st.text_input("Username").strip().lower()
     password_input = st.text_input("Password", type="password")
     
-    if st.button("Login", use_container_width=True):
-        if username_input in STUDENT_DB and STUDENT_DB[username_input] == password_input:
-            st.session_state.username = username_input
-            
-            # Ping Google Sheets to pull any existing allocations for this student
-            with st.spinner("Checking your balance in the database..."):
+    if st.button("Access Dashboard", use_container_width=True, type="primary"):
+        if username_input and password_input:
+            with st.spinner("Authenticating credential access parameters..."):
                 try:
-                    response = requests.get(WEB_APP_URL, params={"student": username_input}, timeout=10)
+                    # Request authentication clearance from the live sheet database
+                    params = {"username": username_input, "password": password_input}
+                    response = requests.get(WEB_APP_URL, params=params, timeout=10)
                     res_data = response.json()
-                    if res_data.get("status") == "success":
-                        st.session_state.existing_allocations = res_data.get("record")
-                except Exception as e:
-                    st.warning("Could not sync with live balance history. Defaulting to fresh session.")
-            
-            st.session_state.logged_in = True
-            st.rerun()
-        else:
-            st.error("Invalid username or password. Please try again.")
-
-# --- MAIN DASHBOARD SIMULATION ---
-else:
-    st.title("💼 Class Investment Dashboard")
-    st.write(f"Welcome back, **{st.session_state.username.capitalize()}**!")
-    st.markdown("---")
-
-    STARTING_BALANCE = 100000.00
-    companies = ["Company A", "Company B", "Company C", "Company D", "Company E", "Company F"]
-
-    # Pre-populate defaults if they have already made a submission
-    defaults = st.session_state.existing_allocations if st.session_state.existing_allocations else {}
-
-    if defaults:
-        st.info("ℹ️ You have already submitted investments! Your current portfolio is loaded below. You can adjust your values and finalize again to update your choices.")
-    else:
-        st.write("### 🏦 Your Portfolio Allocations")
-        st.write("You must allocate **exactly $100,000** across the companies before you can submit.")
-
-    # Create input boxes dynamically
-    allocations = {}
-    total_allocated = 0.0
-
-    col1, col2 = st.columns(2)
-    for idx, company in enumerate(companies):
-        with col1 if idx % 2 == 0 else col2:
-            # Look up historical values from the sheet, default to 0.0 if new student
-            initial_val = float(defaults.get(company, 0.0))
-            
-            amount = st.number_input(
-                f"Allocation for {company} ($)", 
-                min_value=0.0, 
-                max_value=100000.0, 
-                step=1000.0, 
-                value=initial_val,
-                key=f"input_{company}"
-            )
-            allocations[company] = amount
-            total_allocated += amount
-
-    remaining_balance = STARTING_BALANCE - total_allocated
-
-    st.markdown("---")
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total Bank Balance", "$100,000")
-    m2.metric("Total Invested", f"${total_allocated:,.2f}")
-    
-    if remaining_balance < 0:
-        m3.metric("Remaining Cash", f"${remaining_balance:,.2f}", delta="OVER BUDGET", delta_color="inverse")
-        st.error(f"🚨 You are over budget! Please reduce your allocations by ${abs(remaining_balance):,.2f}.")
-        is_ready_to_submit = False
-    elif remaining_balance > 0:
-        m3.metric("Remaining Cash", f"${remaining_balance:,.2f}", delta="FUNDS REMAINING", delta_color="off")
-        st.warning(f"⚠️ You must allocate your remaining **${remaining_balance:,.2f}** to finalise your investment.")
-        is_ready_to_submit = False
-    else:
-        m3.metric("Remaining Cash", "$0.00", delta="FULLY ALLOCATED", delta_color="normal")
-        st.success("✅ Perfect! Your full $100,000 balance has been deployed.")
-        is_ready_to_submit = True
-
-    st.markdown("---")
-
-    if st.button("🚀 Finalise Investment", type="primary", use_container_width=True, disabled=not is_ready_to_submit):
-        with st.spinner("Submitting your secure investment matrix directly to Google Sheets..."):
-            try:
-                payload = {
-                    "Student": st.session_state.username,
-                    "Company A": allocations["Company A"],
-                    "Company B": allocations["Company B"],
-                    "Company C": allocations["Company C"],
-                    "Company D": allocations["Company D"],
-                    "Company E": allocations["Company E"],
-                    "Company F": allocations["Company F"]
-                }
-                
-                response = requests.post(WEB_APP_URL, json=payload, timeout=10)
-                result = response.json()
-                
-                if response.status_code == 200 and result.get("status") == "success":
-                    st.success("🎯 Investment successfully completed! Your allocations have been registered/updated in the class database.")
-                    # Keep track of the new configuration inside session state to prevent refresh loops
-                    st.session_state.existing_allocations = allocations
-                else:
-                    st.error(f"Spreadsheet script error: {result.get('message', 'Unknown issue')}")
                     
-            except Exception as ex:
-                st.error(f"Network error trying to contact the data pipeline. Details: {ex}")
+                    if response.status_code == 200 and res_data.get("status") == "success" and res_data.get("auth") == True:
+                        st.session_state.username = username_input
+                        st.session_state.starting_balance = float(res_data.get("balance", 0.0))
+                        st.session_state.has_submitted = res_data.get("hasSubmitted", False)
+                        st.session_state.companies = res_data.get("companies", ["Company A", "Company B"])
+                        st.session_state.logged_in = True
+                        st.rerun()
+                    else:
+                        st.error("Access Denied. Invalid username or password verified by sheet.")
+                except Exception as e:
+                    st.error(f"Failed to communicate with authentication servers: {e}")
+        else:
+            st.warning("Please enter both fields.")
 
-    if st.sidebar.button("Log Out"):
+# --- LIVE PORTFOLIO ---
+else:
+    st.markdown(f"<div class='main-header'><h1>💼 Portfolio Console</h1><p>Agent Ledger: <b>{st.session_state.username.upper()}</b></p></div>", unsafe_allow_html=True)
+    
+    # CASE A: SUBMISSION FINALISED & BLOCKED
+    if st.session_state.has_submitted:
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Liquid Capital", "$0.00")
+        m2.metric("Capital Deployed", f"${st.session_state.starting_balance:,.2f}")
+        m3.metric("Ledger Status", "LOCKED", delta="SUBMITTED", delta_color="normal")
+        
+        st.markdown("---")
+        st.success("🔒 Your dynamic capital assignment configuration has been finalized. Active modifications are restricted by the ledger admin.")
+        
+    # CASE B: UNLOCKED LIVE GAME SESSION
+    else:
+        total_allocated = 0.0
+        allocations = {}
+        
+        st.write("### Live Budget Configuration")
+        
+        # Build the dynamic grid using headers fetched from the sheet
+        col1, col2 = st.columns(2)
+        for idx, company in enumerate(st.session_state.companies):
+            with col1 if idx % 2 == 0 else col2:
+                # Custom slider bounded by the student's personal dynamic starting balance limit
+                amt = st.slider(
+                    f"Deploy to {company}",
+                    min_value=0,
+                    max_value=int(st.session_state.starting_balance),
+                    step=5000,
+                    value=0,
+                    format="$%d",
+                    key=f"slider_{company}"
+                )
+                allocations[company] = float(amt)
+                total_allocated += float(amt)
+                
+        remaining_balance = st.session_state.starting_balance - total_allocated
+        
+        # Push calculations to top container via layout parsing
+        st.markdown("""<style>div[data-testid="stVerticalBlock"] > div:nth-child(3) { order: -1; }</style>""", unsafe_allow_html=True)
+        
+        top_container = st.container()
+        with top_container:
+            m1, m2, m3 = st.columns(3)
+            
+            if remaining_balance < 0:
+                m1.metric("Available Bank Balance", "$0.00")
+                m2.metric("Allocated Capital", f"${total_allocated:,.00f}")
+                m3.metric("Deficit Check", f"${abs(remaining_balance):,.00f}", delta="OVER BUDGET", delta_color="inverse")
+                st.error("🚨 Account overallocated! Adjust your sliders down to balance budget.")
+                is_ready = False
+            elif remaining_balance > 0:
+                m1.metric("Available Bank Balance", f"${remaining_balance:,.00f}")
+                m2.metric("Allocated Capital", f"${total_allocated:,.00f}")
+                m3.metric("Ledger Status", "PENDING", delta="UNALLOCATED FUNDS", delta_color="off")
+                st.warning(f"⚠️ Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
+                is_ready = False
+            else:
+                m1.metric("Available Bank Balance", "$0.00")
+                m2.metric("Allocated Capital", f"${st.session_state.starting_balance:,.00f}")
+                m3.metric("Ledger Status", "READY", delta="BALANCED", delta_color="normal")
+                st.success(f"✅ Complete assignment of your ${st.session_state.starting_balance:,.00f} budget validated.")
+                is_ready = True
+                
+            st.markdown("---")
+
+        if st.button("🚀 Finalise Investment", type="primary", use_container_width=True, disabled=not is_ready):
+            with st.spinner("Encrypting allocations and signing to master node..."):
+                try:
+                    payload = {"Student": st.session_state.username}
+                    payload.update(allocations)
+                    
+                    response = requests.post(WEB_APP_URL, json=payload, timeout=10)
+                    result = response.json()
+                    
+                    if response.status_code == 200 and result.get("status") == "success":
+                        st.session_state.has_submitted = True
+                        st.success("Data signed cleanly.")
+                        st.rerun()
+                    else:
+                        st.error(f"Error: {result.get('message')}")
+                except Exception as ex:
+                    st.error(f"Network processing failed: {ex}")
+
+    if st.sidebar.button("Exit Console"):
         st.session_state.logged_in = False
         st.session_state.username = ""
-        st.session_state.existing_allocations = None
+        st.session_state.starting_balance = 0.0
+        st.session_state.has_submitted = False
+        st.session_state.companies = []
         st.rerun()
