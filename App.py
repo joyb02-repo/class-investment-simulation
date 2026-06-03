@@ -20,8 +20,6 @@ if "companies" not in st.session_state:
     st.session_state.companies = []
 if "user_own_company" not in st.session_state:
     st.session_state.user_own_company = ""
-if "login_step" not in st.session_state:
-    st.session_state.login_step = "fetch_initial"
 
 # --- CLEAN GLOBAL TYPOGRAPHY ---
 st.markdown("""
@@ -58,7 +56,6 @@ if not st.session_state.logged_in:
     # Pre-fetch company names so the dropdown is ready when they arrive
     if not st.session_state.companies:
         try:
-            # Send an anonymous ping just to grab the dynamic sheet headers
             response = requests.get(WEB_APP_URL, params={"username": "", "password": ""}, timeout=5)
             res_data = response.json()
             if res_data.get("status") == "success" and res_data.get("companies"):
@@ -69,7 +66,6 @@ if not st.session_state.logged_in:
     username_input = st.text_input("Username").strip().lower()
     password_input = st.text_input("Password", type="password")
     
-    # New Dropdown Selector Box 
     own_company_selection = st.selectbox(
         "Select your own company (Investment in this selection will be restricted)", 
         options=["-- Select Your Company --"] + st.session_state.companies
@@ -129,17 +125,16 @@ else:
         col1, col2 = st.columns(2)
         for idx, company in enumerate(st.session_state.companies):
             with col1 if idx % 2 == 0 else col2:
-                # Rule check: If this is their own company, completely lock it out
                 if company == st.session_state.user_own_company:
                     amt = st.slider(
                         label=f"Invest in **{company}** (Your Company - Restricted)",
                         min_value=0,
-                        max_value=0,
+                        max_value=5000,  # Safe range to bypass Streamlit constraint
                         step=5000,
                         value=0,
                         format="$%d",
                         key=f"slider_{company}",
-                        disabled=True # Locks the component from receiving input events
+                        disabled=True
                     )
                 else:
                     amt = st.slider(
