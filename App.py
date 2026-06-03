@@ -5,7 +5,6 @@ import requests
 st.set_page_config(page_title="SharkTank Investment Simulator", layout="centered")
 
 # 1. WEB APP MACRO LINK
-# 🔴 PASTE YOUR COPIED GOOGLE WEB APP URL HERE:
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-9n2foZ57LRw6WM-C6CRYewWTy-cv6ftMZ-dTqSr4zRZ1Q8mvHgT3TPq1CLeVOdrY/exec"
 
 # 2. SESSION STATE INITIALIZATION
@@ -21,7 +20,6 @@ if "companies" not in st.session_state:
     st.session_state.companies = []
 
 # --- INJECT INTERACTIVE UI DESIGN IMPROVEMENTS (CSS) ---
-# This customizes typography, bolding, colors, and thickens the slider components
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -47,24 +45,36 @@ st.markdown("""
             font-size: 1rem;
         }
         
-        /* Slider Styling Overrides (Thicker Track and Handle) */
+        /* Custom Inline Slider Labels */
+        .slider-label {
+            font-size: 1rem !important;
+            font-weight: 400 !important;
+            color: #1E293B !important;
+            margin-bottom: -10px !important;
+            display: block;
+        }
+        .slider-label strong {
+            font-weight: 700 !important;
+        }
+        
+        /* Slider Track and Handle Structural Polish */
         div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
             font-weight: 600 !important;
             color: #1E293B !important;
         }
         div[data-testid="stSlider"] > div > div > div {
-            background-color: #2563EB !important; /* Rich blue filled track */
-            height: 8px !important;              /* Thicker structural track line */
+            background-color: #2563EB !important;
+            height: 8px !important;              
         }
         div[data-testid="stSlider"] [role="slider"] {
-            width: 20px !important;              /* Larger, user-friendly interactive handle */
-            height: 20px !important;
+            width: 22px !important;              
+            height: 22px !important;
             background-color: #FFFFFF !important;
             border: 3px solid #2563EB !important;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
         }
         
-        /* Standard Header Metric text spacing */
+        /* Standard Header Metric Text Sizing */
         div[data-testid="stMetricValue"] {
             font-size: 2rem !important;
             font-weight: 700 !important;
@@ -108,7 +118,7 @@ else:
     # CASE A: SUBMISSION FINALISED & BLOCKED
     if st.session_state.has_submitted:
         m1, m2, m3 = st.columns(3)
-        m1.metric("Bank Balance", "$0.00")
+        m1.metric("Available Bank Balance", "$0.00")
         m2.metric("Investment Portfolio Deployed", f"${st.session_state.starting_balance:,.2f}")
         m3.metric("Ledger Status", "LOCKED", delta="SUBMITTED", delta_color="normal")
         
@@ -120,12 +130,12 @@ else:
         total_allocated = 0.0
         allocations = {}
         
-        # Build the dynamic grid using headers fetched from the sheet
+        # Build the dynamic grid layout cleanly
         col1, col2 = st.columns(2)
         for idx, company in enumerate(st.session_state.companies):
             with col1 if idx % 2 == 0 else col2:
-                # Custom label layout formatting using markdown for bolding
-                st.markdown(f"Invest in **{company}**")
+                # Custom HTML wrapper injection to fix the broken alignment and gap sizing
+                st.markdown(f"<span class='slider-label'>Invest in <strong>{company}</strong></span>", unsafe_allow_html=True)
                 amt = st.slider(
                     label=f"Invest in {company}",
                     min_value=0,
@@ -134,14 +144,14 @@ else:
                     value=0,
                     format="$%d",
                     key=f"slider_{company}",
-                    label_visibility="collapsed" # Hide native tiny label to use our clean bold markdown layout
+                    label_visibility="collapsed" 
                 )
                 allocations[company] = float(amt)
                 total_allocated += float(amt)
                 
         remaining_balance = st.session_state.starting_balance - total_allocated
         
-        # Pull metric calculations container component to the top layout viewport position
+        # Enforce metrics box positioning at the top level of the app framework layout
         st.markdown("""<style>div[data-testid="stVerticalBlock"] > div:nth-child(2) { order: -1; }</style>""", unsafe_allow_html=True)
         
         top_container = st.container()
@@ -149,11 +159,11 @@ else:
             m1, m2, m3 = st.columns(3)
             
             if remaining_balance < 0:
-                # Dynamically inject structural custom CSS to make metrics red during overallocation deficit states
+                # Target the exact position row structure of metric column 1 to force deep crimson red text
                 st.markdown("""
                     <style>
-                        div[data-testid="stMetric"][aria-label*="Available Bank Balance"] div[data-testid="stMetricValue"] {
-                            color: #DC2626 !important; /* Crimson Red override */
+                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
+                            color: #DC2626 !important;
                         }
                     </style>
                 """, unsafe_allow_html=True)
@@ -164,12 +174,30 @@ else:
                 st.error(f"🚨 Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             elif remaining_balance > 0:
+                # Target the exact position row structure of metric column 1 to force deep emerald green text
+                st.markdown("""
+                    <style>
+                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
+                            color: #16A34A !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
                 m1.metric("Available Bank Balance", f"${remaining_balance:,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 m3.metric("Ledger Status", "PENDING", delta="UNALLOCATED FUNDS", delta_color="off")
                 st.warning(f"⚠️ Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
                 is_ready = False
             else:
+                # Target the exact position row structure of metric column 1 to force deep emerald green text
+                st.markdown("""
+                    <style>
+                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
+                            color: #16A34A !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
                 m1.metric("Available Bank Balance", "$0.00")
                 m2.metric("Investment Total", f"${st.session_state.starting_balance:,.00f}")
                 m3.metric("Ledger Status", "READY", delta="BALANCED", delta_color="normal")
