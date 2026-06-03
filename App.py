@@ -21,7 +21,7 @@ if "companies" not in st.session_state:
 if "user_own_company" not in st.session_state:
     st.session_state.user_own_company = ""
 
-# --- CLEAN GLOBAL TYPOGRAPHY ---
+# --- CLEAN GLOBAL TYPOGRAPHY & PURPLE SLIDER THEME ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -45,6 +45,20 @@ st.markdown("""
         div[data-testid="stMetricValue"] {
             font-size: 2.2rem !important;
             font-weight: 700 !important;
+        }
+        
+        /* --- PURPLE SLIDER ACCENTS --- */
+        /* Changes the filled track color */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background-color: rgb(255, 75, 75)"],
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background: rgb(255, 75, 75)"] {
+            background: #7B2CBF !important;
+            background-color: #7B2CBF !important;
+        }
+        /* Changes the moving handle/thumb color */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
+            background-color: #7B2CBF !important;
+            border-color: #7B2CBF !important;
+            box-shadow: 0px 0px 4px rgba(123, 44, 191, 0.4);
         }
     </style>
 """, unsafe_allow_html=True)
