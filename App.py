@@ -1,11 +1,10 @@
 import streamlit as st
 import requests
-import os
 
 # Page configuration
 st.set_page_config(page_title="SharkTank Investment Simulator", layout="centered")
 
-# 1. LIVE SECURE WEB APP MACRO LINK
+# 1. WEB APP MACRO LINK
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-9n2foZ57LRw6WM-C6CRYewWTy-cv6ftMZ-dTqSr4zRZ1Q8mvHgT3TPq1CLeVOdrY/exec"
 
 # 2. SESSION STATE INITIALIZATION
@@ -22,145 +21,44 @@ if "companies" not in st.session_state:
 if "user_own_company" not in st.session_state:
     st.session_state.user_own_company = ""
 
-# --- CENTRED LOGO WITH PURPLE CHROMATIC FILTER ---
-def render_top_logo():
-    logo_path = "logo.png"
-    if os.path.exists(logo_path):
-        # Balanced 3-column layout locks structural alignment perfectly across mobile and desktop
-        left, center, right = st.columns([1, 1.5, 1])
-        with center:
-            # Color matrix formula shifts the base image gray directly into matching theme purple
-            st.markdown("""
-                <div style="text-align: center; margin-bottom: 10px; filter: invert(34%) sepia(85%) saturate(1915%) hue-rotate(253deg) brightness(96%) contrast(97%);">
-                    <img src="app/static/logo.png" width="160" style="display: block; margin: 0 auto;"/>
-                </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.markdown("<h2 style='text-align: center; color: #9333EA; letter-spacing: 2px; font-weight:700; margin-bottom:0;'>SHARK TANK</h2>", unsafe_allow_html=True)
-
-# --- ENGINE UI SYSTEM OVERRIDES (CSS) ---
+# --- CLEAN GLOBAL TYPOGRAPHY ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        /* Global Font Normalization */
         html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
             font-family: 'Inter', sans-serif !important;
         }
-
-        /* Adaptive Header Typography (High visibility across Light/Dark modes) */
         .main-header {
             text-align: center;
-            margin-top: 0.2rem;
-            margin-bottom: 1.8rem;
+            margin-bottom: 2rem;
         }
         .main-header h1 {
             font-weight: 700;
             letter-spacing: -0.05rem;
-            color: #9333EA !important; 
+            color: #1E293B;
             margin-bottom: 0.2rem;
-            font-size: 1.9rem;
         }
         .main-header p {
-            color: #A855F7;
+            color: #64748B;
             font-size: 1rem;
-            font-weight: 500;
         }
-        
-        /* THEME SLIDER STRUCTURAL INTEGRITY PATCHES */
-        /* Targets active amount text strings, enforcing theme color */
-        div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
-            font-weight: 700 !important;
-            color: #9333EA !important;
-        }
-        
-        /* Re-enforces baseline track line sizes to fix invisible rendering anomalies */
-        div[data-testid="stSlider"] > div > div > div {
-            background-color: #9333EA !important;
-            background: #9333EA !important;
-            height: 8px !important;              
-            border-radius: 9999px !important;
-        }
-        
-        /* Re-enforces standard slider knob diameter bounds and fixes square distortion shapes */
-        div[data-testid="stSlider"] [role="slider"] {
-            width: 22px !important;              
-            height: 22px !important;
-            background-color: #FFFFFF !important;
-            border: 4px solid #9333EA !important;
-            border-radius: 50% !important;
-            box-shadow: 0px 2px 5px rgba(147, 51, 234, 0.4) !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
-        
-        /* Erases background highlights and color-burn issues on bottom slider boundaries */
-        div[data-testid="stSlider"] div[data-testid="styledTickBar"] div,
-        div[data-testid="stSlider"] div[class*="st-"] {
-            background-color: transparent !important;
-            background: transparent !important;
-            border-radius: 0px !important;
-        }
-        
-        /* Sets the min/max value labels ($0, $150k) to a clear, stable neutral gray */
-        div[data-testid="stSlider"] p[data-testid="stWidgetLabel"] + div div {
-            color: #64748B !important;
-            font-weight: 500 !important;
-        }
-        
-        /* Enclosed Curved Background Card Layout behind Sliders */
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id^="slider_"]) {
-            background-color: rgba(147, 51, 234, 0.04) !important;
-            border: 1px solid rgba(147, 51, 234, 0.15) !important;
-            border-radius: 18px !important;
-            padding: 28px !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-        }
-        
-        /* Company text header layout labels inside card blocks */
-        div[data-testid="stVerticalBlockBorderWrapper"] label p {
-            font-size: 1.05rem !important;
-            font-weight: 600 !important;
-        }
-        
-        /* Main metric layout parameters layout */
         div[data-testid="stMetricValue"] {
             font-size: 2.2rem !important;
             font-weight: 700 !important;
-            letter-spacing: -0.03rem;
-        }
-        div[data-testid="stMetricLabel"] {
-            font-weight: 600 !important;
-        }
-        
-        /* Premium Action Buttons */
-        div.stButton > button[kind="primary"] {
-            background-color: #9333EA !important;
-            border: none !important;
-            color: white !important;
-            font-weight: 600 !important;
-            border-radius: 9999px !important;
-            padding: 0.6rem 2rem !important;
-            transition: all 0.2s ease;
-        }
-        div.stButton > button[kind="primary"]:hover {
-            background-color: #7E22CE !important;
-            box-shadow: 0px 4px 12px rgba(126, 34, 206, 0.35);
         }
     </style>
 """, unsafe_allow_html=True)
 
 # --- LOGIN ENGINE ---
 if not st.session_state.logged_in:
-    render_top_logo()
-    st.markdown("<div class='main-header'><h1>Investment Portal</h1><p>Enter your assigned authorization credentials</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='main-header'><h1>🔐 SharkTank Investment Portal</h1><p>Enter your credentials provided by the ledger admin</p></div>", unsafe_allow_html=True)
     
     username_input = st.text_input("Username").strip().lower()
     password_input = st.text_input("Password", type="password")
     
     if st.button("Access Dashboard", use_container_width=True, type="primary"):
         if not username_input or not password_input:
-            st.warning("Please fill out all credentials.")
+            st.warning("Please enter both fields.")
         else:
             with st.spinner("Authenticating credential access parameters..."):
                 try:
@@ -171,7 +69,7 @@ if not st.session_state.logged_in:
                     if response.status_code == 200 and res_data.get("status") == "success" and res_data.get("auth") == True:
                         st.session_state.username = username_input
                         st.session_state.starting_balance = float(res_data.get("balance", 0.0))
-                        st.session_state.user_own_company = res_data.get("restricted", "")
+                        st.session_state.user_own_company = res_data.get("restricted", "") # Received from backend tab column 4
                         st.session_state.has_submitted = res_data.get("hasSubmitted", False)
                         
                         if res_data.get("companies"):
@@ -186,8 +84,7 @@ if not st.session_state.logged_in:
 
 # --- LIVE PORTFOLIO ---
 else:
-    render_top_logo()
-    st.markdown(f"<div class='main-header'><h1>Portfolio Console</h1><p>Agent Ledger: <b>{st.session_state.username.upper()}</b></p></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='main-header'><h1>💼 Portfolio Console</h1><p>Agent Ledger: <b>{st.session_state.username.upper()}</b></p></div>", unsafe_allow_html=True)
     
     # CASE A: SUBMISSION FINALISED & BLOCKED
     if st.session_state.has_submitted:
@@ -197,7 +94,7 @@ else:
         m3.metric("Ledger Status", "LOCKED", delta="SUBMITTED", delta_color="normal")
         
         st.markdown("---")
-        st.success("Your investment portfolio has been finalised. Active modifications are restricted by the ledger admin.")
+        st.success("🔒 Your investment portfolio has been finalised. Active modifications are restricted by the ledger admin.")
         
     # CASE B: UNLOCKED LIVE GAME SESSION
     else:
@@ -209,34 +106,34 @@ else:
         total_allocated = 0.0
         allocations = {}
         
-        # Safe border block wrapping layout clean behind workspace sliders
-        with st.container(border=True):
-            col1, col2 = st.columns(2)
-            for idx, company in enumerate(st.session_state.companies):
-                with col1 if idx % 2 == 0 else col2:
-                    if company.strip().lower() == st.session_state.user_own_company.strip().lower():
-                        amt = st.slider(
-                            label=f"Invest in **{company}** (Your Assigned Company - Restricted)",
-                            min_value=0,
-                            max_value=5000,
-                            step=5000,
-                            value=0,
-                            format="$%d",
-                            key=f"slider_{company}",
-                            disabled=True
-                        )
-                    else:
-                        amt = st.slider(
-                            label=f"Invest in **{company}**",
-                            min_value=0,
-                            max_value=int(st.session_state.starting_balance),
-                            step=5000,
-                            value=0,
-                            format="$%d",
-                            key=f"slider_{company}"
-                        )
-                    allocations[company] = float(amt)
-                    total_allocated += float(amt)
+        # Build the dynamic clean layout grid
+        col1, col2 = st.columns(2)
+        for idx, company in enumerate(st.session_state.companies):
+            with col1 if idx % 2 == 0 else col2:
+                # Rule check: Lock slider completely if it matches the assigned restricted company string from the sheet
+                if company.strip().lower() == st.session_state.user_own_company.strip().lower():
+                    amt = st.slider(
+                        label=f"Invest in **{company}** (Your Assigned Company - Restricted)",
+                        min_value=0,
+                        max_value=5000,
+                        step=5000,
+                        value=0,
+                        format="$%d",
+                        key=f"slider_{company}",
+                        disabled=True
+                    )
+                else:
+                    amt = st.slider(
+                        label=f"Invest in **{company}**",
+                        min_value=0,
+                        max_value=int(st.session_state.starting_balance),
+                        step=5000,
+                        value=0,
+                        format="$%d",
+                        key=f"slider_{company}"
+                    )
+                allocations[company] = float(amt)
+                total_allocated += float(amt)
                 
         remaining_balance = st.session_state.starting_balance - total_allocated
         
@@ -245,41 +142,25 @@ else:
             m1, m2, m3 = st.columns(3)
             
             if remaining_balance < 0:
-                # DEEP DEFICIT RED: Targets only the bank balance metric block value cleanly
-                st.markdown("""
-                    <style>
-                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
-                            color: #DC2626 !important;
-                        }
-                    </style>
-                """, unsafe_allow_html=True)
-                
+                st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #DC2626 !important; }</style>", unsafe_allow_html=True)
                 m1.metric("Available Bank Balance", f"-${abs(remaining_balance):,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 m3.metric("Deficit Check", f"${abs(remaining_balance):,.00f}", delta="OVER BUDGET", delta_color="inverse")
                 
-                st.error(f"Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
+                st.error(f"🚨 Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             else:
-                # VIBRANT ACCENT PURPLE: Formats default metric tracking state
-                st.markdown("""
-                    <style>
-                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
-                            color: #9333EA !important;
-                        }
-                    </style>
-                """, unsafe_allow_html=True)
-                
+                st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #16A34A !important; }</style>", unsafe_allow_html=True)
                 m1.metric("Available Bank Balance", f"${remaining_balance:,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 
                 if remaining_balance > 0:
                     m3.metric("Ledger Status", "PENDING", delta="UNALLOCATED FUNDS", delta_color="off")
-                    st.warning(f"Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
+                    st.warning(f"⚠️ Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
                     is_ready = False
                 else:
                     m3.metric("Ledger Status", "READY", delta="BALANCED", delta_color="normal")
-                    st.success(f"Complete assignment of your ${st.session_state.starting_balance:,.00f} budget validated.")
+                    st.success(f"✅ Complete assignment of your ${st.session_state.starting_balance:,.00f} budget validated.")
                     is_ready = True
 
         st.markdown("---")
