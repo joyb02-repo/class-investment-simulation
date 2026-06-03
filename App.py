@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # Page configuration
-st.set_page_config(page_title="Venture Capital Simulation", layout="centered")
+st.set_page_config(page_title="SharkTank Investment Simulator", layout="centered")
 
 # 1. WEB APP MACRO LINK
 # 🔴 PASTE YOUR COPIED GOOGLE WEB APP URL HERE:
@@ -74,7 +74,7 @@ st.markdown("""
 
 # --- LOGIN SCREEN ---
 if not st.session_state.logged_in:
-    st.markdown("<div class='main-header'><h1>🔐 Venture Portal</h1><p>Enter your credentials managed via Google Sheets</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='main-header'><h1>🔐 SharkTank Investment Portal</h1><p>Enter your credentials provided by the ledger admin</p></div>", unsafe_allow_html=True)
     
     username_input = st.text_input("Username").strip().lower()
     password_input = st.text_input("Password", type="password")
