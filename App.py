@@ -48,23 +48,23 @@ st.markdown("""
         }
         
         /* --- ACCURATE PURPLE SLIDER OVERRIDES --- */
-        /* Targets the active line track behind the handle bar without bleeding into other divs */
-        div[data-testid="stSlider"] [data-baseweb="slider"] > div [role="presentation"] > div:first-child {
-            background: linear-gradient(to right, rgb(123, 44, 191) 0%, rgb(123, 44, 191) var(--slider-progress, 100%), rgb(238, 242, 246) var(--slider-progress, 100%)) !important;
-        }
-        
-        /* Fallback for explicit active track elements generated on slider value updates */
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background-color: rgb(255, 75, 75)"],
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background: rgb(255, 75, 75)"] {
+        /* 1. Turns the dragging fill line purple */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[data-testid="stSliderTickBar"] ~ div {
             background-color: #7B2CBF !important;
             background: #7B2CBF !important;
         }
 
-        /* Targets the circular draggable handle button */
+        /* 2. Turns the moving handle/thumb dot purple */
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
             background-color: #7B2CBF !important;
             border-color: #7B2CBF !important;
             box-shadow: 0px 0px 4px rgba(123, 44, 191, 0.4) !important;
+        }
+
+        /* 3. Turns the numbers changing on top of the slider purple */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] div {
+            color: #7B2CBF !important;
+            font-weight: 600 !important;
         }
     </style>
 """, unsafe_allow_html=True)
