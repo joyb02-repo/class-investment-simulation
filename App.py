@@ -5,7 +5,7 @@ import os
 # Page configuration
 st.set_page_config(page_title="SharkTank Investment Simulator", layout="centered")
 
-# 1. WEB APP MACRO LINK
+# 1. UPDATED WEB APP MACRO LINK
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-9n2foZ57LRw6WM-C6CRYewWTy-cv6ftMZ-dTqSr4zRZ1Q8mvHgT3TPq1CLeVOdrY/exec"
 
 # 2. SESSION STATE INITIALIZATION
@@ -22,32 +22,31 @@ if "companies" not in st.session_state:
 if "user_own_company" not in st.session_state:
     st.session_state.user_own_company = ""
 
-# --- HELPER FUNCTION TO RENDER LOGO SAFE ---
+# --- LOGO RENDERING ENGINE ---
 def render_top_logo():
     logo_path = "logo.png"
     if os.path.exists(logo_path):
-        st.image(logo_path, width=140)
+        st.image(logo_path, width=150)
     else:
-        # Fallback centered text if file isn't placed in directory yet
-        st.markdown("<h3 style='text-align: center; color: #8B5CF6; letter-spacing: 2px;'>SHARK TANK</h3>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #8B5CF6; letter-spacing: 2px; font-weight:700; margin-bottom:0;'>SHARK TANK</h2>", unsafe_allow_html=True)
 
-# --- CORE SLEEK PURPLE + LIGHT INTERFACE OVERRIDES (CSS) ---
+# --- CORE PREMIUM LIGHT UI SYSTEM OVERRIDES (CSS) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        /* Font and App Background Reset */
+        /* Global Typography Normalization */
         html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
             font-family: 'Inter', sans-serif !important;
         }
         
-        /* Center elements globally */
+        /* Center Logo Automatically */
         [data-testid="stImage"] {
             margin: 0 auto !important;
             display: block;
         }
 
-        /* Typography Header Elements */
+        /* Workspace Header Elements */
         .main-header {
             text-align: center;
             margin-top: 0.5rem;
@@ -65,17 +64,7 @@ st.markdown("""
             font-size: 1rem;
         }
         
-        /* Curved Semi-Transparent Container Card behind Sliders */
-        div.slider-card-bg {
-            background-color: rgba(248, 250, 252, 0.85);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Premium Purple Sliders Override */
+        /* TARGETED SLIDER STYLING - Forces Purple Handles and Tracks Only */
         div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
             font-weight: 700 !important;
             color: #8B5CF6 !important;
@@ -91,21 +80,40 @@ st.markdown("""
             background-color: #FFFFFF !important;
             border: 4px solid #8B5CF6 !important;
             box-shadow: 0px 2px 4px rgba(139, 92, 246, 0.3);
-            cursor: pointer !important;
         }
         
-        /* Metric Styling Setup */
+        /* Enforces slider scale markers to stay dark gray, stopping the red color bleed */
+        div[data-testid="stSlider"] div[data-testid="styledTickBar"] div {
+            color: #64748B !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Targets the text labels inside the container card block */
+        div[data-testid="stVerticalBlockBorderWrapper"] label p {
+            font-size: 1.05rem !important;
+            color: #1E293B !important;
+        }
+        
+        /* Custom Curving Container Box Injection */
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id^="slider_"]) {
+            background-color: rgba(139, 92, 246, 0.04) !important;
+            border: 1px solid rgba(139, 92, 246, 0.15) !important;
+            border-radius: 18px !important;
+            padding: 28px !important;
+        }
+        
+        /* Layout Metrics Architecture Configuration */
         div[data-testid="stMetricValue"] {
             font-size: 2.2rem !important;
             font-weight: 700 !important;
             letter-spacing: -0.03rem;
         }
         div[data-testid="stMetricLabel"] {
-            font-weight: 500 !important;
-            color: #64748B !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
         }
         
-        /* Sleek Purple Primary Interactive Buttons */
+        /* Premium Curved Theme Primary Actions Button */
         div.stButton > button[kind="primary"] {
             background-color: #8B5CF6 !important;
             border: none !important;
@@ -181,39 +189,35 @@ else:
         total_allocated = 0.0
         allocations = {}
         
-        # Open curved background block for sliders
-        st.markdown('<div class="slider-card-bg">', unsafe_allow_html=True)
-        
-        # Build the dynamic multi-column placement matrix
-        col1, col2 = st.columns(2)
-        for idx, company in enumerate(st.session_state.companies):
-            with col1 if idx % 2 == 0 else col2:
-                if company.strip().lower() == st.session_state.user_own_company.strip().lower():
-                    amt = st.slider(
-                        label=f"Invest in **{company}** (Your Assigned Company - Restricted)",
-                        min_value=0,
-                        max_value=5000,
-                        step=5000,
-                        value=0,
-                        format="$%d",
-                        key=f"slider_{company}",
-                        disabled=True
-                    )
-                else:
-                    amt = st.slider(
-                        label=f"Invest in **{company}**",
-                        min_value=0,
-                        max_value=int(st.session_state.starting_balance),
-                        step=5000,
-                        value=0,
-                        format="$%d",
-                        key=f"slider_{company}"
-                    )
-                allocations[company] = float(amt)
-                total_allocated += float(amt)
+        # Native safe block wrapping behind sliders
+        with st.container(border=True):
+            col1, col2 = st.columns(2)
+            for idx, company in enumerate(st.session_state.companies):
+                with col1 if idx % 2 == 0 else col2:
+                    if company.strip().lower() == st.session_state.user_own_company.strip().lower():
+                        amt = st.slider(
+                            label=f"Invest in **{company}** (Your Assigned Company - Restricted)",
+                            min_value=0,
+                            max_value=5000,
+                            step=5000,
+                            value=0,
+                            format="$%d",
+                            key=f"slider_{company}",
+                            disabled=True
+                        )
+                    else:
+                        amt = st.slider(
+                            label=f"Invest in **{company}**",
+                            min_value=0,
+                            max_value=int(st.session_state.starting_balance),
+                            step=5000,
+                            value=0,
+                            format="$%d",
+                            key=f"slider_{company}"
+                        )
+                    allocations[company] = float(amt)
+                    total_allocated += float(amt)
                 
-        st.markdown('</div>', unsafe_allow_html=True) # Close curved slider block container
-        
         remaining_balance = st.session_state.starting_balance - total_allocated
         
         # --- RENDER TOP METRICS & COLOR CHECKS ---
@@ -221,8 +225,15 @@ else:
             m1, m2, m3 = st.columns(3)
             
             if remaining_balance < 0:
-                # Changes color to bright Crimson Red during budget deficits
-                st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #DC2626 !important; }</style>", unsafe_allow_html=True)
+                # DEEP DEFCIT RED: Strictly targets metric block text values without bleeding into sliders
+                st.markdown("""
+                    <style>
+                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
+                            color: #DC2626 !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
                 m1.metric("Available Bank Balance", f"-${abs(remaining_balance):,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 m3.metric("Deficit Check", f"${abs(remaining_balance):,.00f}", delta="OVER BUDGET", delta_color="inverse")
@@ -230,8 +241,15 @@ else:
                 st.error(f"Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             else:
-                # Clean, rich Purple accent color tracking for normal/balanced budget states
-                st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #8B5CF6 !important; }</style>", unsafe_allow_html=True)
+                # VIBRANT ACCENT PURPLE: Formats normal balance metrics safely
+                st.markdown("""
+                    <style>
+                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
+                            color: #8B5CF6 !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
                 m1.metric("Available Bank Balance", f"${remaining_balance:,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 
