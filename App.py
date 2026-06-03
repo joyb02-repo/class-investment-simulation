@@ -4,28 +4,6 @@ import requests
 # Page configuration
 st.set_page_config(page_title="Venture Capital Simulation", layout="centered")
 
-# Custom UI CSS Styling
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        html, body, [data-testid="stAppViewContainer"] {
-            font-family: 'Inter', sans-serif;
-        }
-        div[data-testid="stMetricValue"] {
-            font-size: 2.2rem !important;
-            font-weight: 700 !important;
-        }
-        .main-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .main-header h1 {
-            font-weight: 700;
-            letter-spacing: -0.05rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # 1. WEB APP MACRO LINK
 # 🔴 PASTE YOUR COPIED GOOGLE WEB APP URL HERE:
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-9n2foZ57LRw6WM-C6CRYewWTy-cv6ftMZ-dTqSr4zRZ1Q8mvHgT3TPq1CLeVOdrY/exec"
@@ -42,6 +20,58 @@ if "has_submitted" not in st.session_state:
 if "companies" not in st.session_state:
     st.session_state.companies = []
 
+# --- INJECT INTERACTIVE UI DESIGN IMPROVEMENTS (CSS) ---
+# This customizes typography, bolding, colors, and thickens the slider components
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        /* Global Typography Override */
+        html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
+            font-family: 'Inter', sans-serif !important;
+        }
+        
+        /* Professional Title Formatting */
+        .main-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .main-header h1 {
+            font-weight: 700;
+            letter-spacing: -0.05rem;
+            color: #1E293B;
+            margin-bottom: 0.2rem;
+        }
+        .main-header p {
+            color: #64748B;
+            font-size: 1rem;
+        }
+        
+        /* Slider Styling Overrides (Thicker Track and Handle) */
+        div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
+            font-weight: 600 !important;
+            color: #1E293B !important;
+        }
+        div[data-testid="stSlider"] > div > div > div {
+            background-color: #2563EB !important; /* Rich blue filled track */
+            height: 8px !important;              /* Thicker structural track line */
+        }
+        div[data-testid="stSlider"] [role="slider"] {
+            width: 20px !important;              /* Larger, user-friendly interactive handle */
+            height: 20px !important;
+            background-color: #FFFFFF !important;
+            border: 3px solid #2563EB !important;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Standard Header Metric text spacing */
+        div[data-testid="stMetricValue"] {
+            font-size: 2rem !important;
+            font-weight: 700 !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # --- LOGIN SCREEN ---
 if not st.session_state.logged_in:
     st.markdown("<div class='main-header'><h1>🔐 Venture Portal</h1><p>Enter your credentials managed via Google Sheets</p></div>", unsafe_allow_html=True)
@@ -53,7 +83,6 @@ if not st.session_state.logged_in:
         if username_input and password_input:
             with st.spinner("Authenticating credential access parameters..."):
                 try:
-                    # Request authentication clearance from the live sheet database
                     params = {"username": username_input, "password": password_input}
                     response = requests.get(WEB_APP_URL, params=params, timeout=10)
                     res_data = response.json()
@@ -79,68 +108,77 @@ else:
     # CASE A: SUBMISSION FINALISED & BLOCKED
     if st.session_state.has_submitted:
         m1, m2, m3 = st.columns(3)
-        m1.metric("Liquid Capital", "$0.00")
-        m2.metric("Capital Deployed", f"${st.session_state.starting_balance:,.2f}")
+        m1.metric("Bank Balance", "$0.00")
+        m2.metric("Investment Portfolio Deployed", f"${st.session_state.starting_balance:,.2f}")
         m3.metric("Ledger Status", "LOCKED", delta="SUBMITTED", delta_color="normal")
         
         st.markdown("---")
-        st.success("🔒 Your dynamic capital assignment configuration has been finalized. Active modifications are restricted by the ledger admin.")
+        st.success("🔒 Your investment portfolio has been finalised. Active modifications are restricted by the ledger admin.")
         
     # CASE B: UNLOCKED LIVE GAME SESSION
     else:
         total_allocated = 0.0
         allocations = {}
         
-        st.write("### Live Budget Configuration")
-        
         # Build the dynamic grid using headers fetched from the sheet
         col1, col2 = st.columns(2)
         for idx, company in enumerate(st.session_state.companies):
             with col1 if idx % 2 == 0 else col2:
-                # Custom slider bounded by the student's personal dynamic starting balance limit
+                # Custom label layout formatting using markdown for bolding
+                st.markdown(f"Invest in **{company}**")
                 amt = st.slider(
-                    f"Deploy to {company}",
+                    label=f"Invest in {company}",
                     min_value=0,
                     max_value=int(st.session_state.starting_balance),
                     step=5000,
                     value=0,
                     format="$%d",
-                    key=f"slider_{company}"
+                    key=f"slider_{company}",
+                    label_visibility="collapsed" # Hide native tiny label to use our clean bold markdown layout
                 )
                 allocations[company] = float(amt)
                 total_allocated += float(amt)
                 
         remaining_balance = st.session_state.starting_balance - total_allocated
         
-        # Push calculations to top container via layout parsing
-        st.markdown("""<style>div[data-testid="stVerticalBlock"] > div:nth-child(3) { order: -1; }</style>""", unsafe_allow_html=True)
+        # Pull metric calculations container component to the top layout viewport position
+        st.markdown("""<style>div[data-testid="stVerticalBlock"] > div:nth-child(2) { order: -1; }</style>""", unsafe_allow_html=True)
         
         top_container = st.container()
         with top_container:
             m1, m2, m3 = st.columns(3)
             
             if remaining_balance < 0:
-                m1.metric("Available Bank Balance", "$0.00")
-                m2.metric("Allocated Capital", f"${total_allocated:,.00f}")
+                # Dynamically inject structural custom CSS to make metrics red during overallocation deficit states
+                st.markdown("""
+                    <style>
+                        div[data-testid="stMetric"][aria-label*="Available Bank Balance"] div[data-testid="stMetricValue"] {
+                            color: #DC2626 !important; /* Crimson Red override */
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
+                m1.metric("Available Bank Balance", f"-${abs(remaining_balance):,.00f}")
+                m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 m3.metric("Deficit Check", f"${abs(remaining_balance):,.00f}", delta="OVER BUDGET", delta_color="inverse")
-                st.error("🚨 Account overallocated! Adjust your sliders down to balance budget.")
+                st.error(f"🚨 Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             elif remaining_balance > 0:
                 m1.metric("Available Bank Balance", f"${remaining_balance:,.00f}")
-                m2.metric("Allocated Capital", f"${total_allocated:,.00f}")
+                m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 m3.metric("Ledger Status", "PENDING", delta="UNALLOCATED FUNDS", delta_color="off")
                 st.warning(f"⚠️ Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
                 is_ready = False
             else:
                 m1.metric("Available Bank Balance", "$0.00")
-                m2.metric("Allocated Capital", f"${st.session_state.starting_balance:,.00f}")
+                m2.metric("Investment Total", f"${st.session_state.starting_balance:,.00f}")
                 m3.metric("Ledger Status", "READY", delta="BALANCED", delta_color="normal")
                 st.success(f"✅ Complete assignment of your ${st.session_state.starting_balance:,.00f} budget validated.")
                 is_ready = True
                 
             st.markdown("---")
 
-        if st.button("🚀 Finalise Investment", type="primary", use_container_width=True, disabled=not is_ready):
+        if st.button("Finalise Investment", type="primary", use_container_width=True, disabled=not is_ready):
             with st.spinner("Encrypting allocations and signing to master node..."):
                 try:
                     payload = {"Student": st.session_state.username}
