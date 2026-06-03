@@ -48,17 +48,19 @@ st.markdown("""
         }
         
         /* --- PURPLE SLIDER ACCENTS --- */
-        /* Changes the filled track color */
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background-color: rgb(255, 75, 75)"],
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background: rgb(255, 75, 75)"] {
-            background: #7B2CBF !important;
+        /* 1. Force the filled/active track line to be purple */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div {
+            background-image: linear-gradient(to right, #7B2CBF, #7B2CBF) !important;
+        }
+        div[data-testid="stSlider"] [data-baseweb="slider"] [data-testid="stSliderTickBar"] ~ div {
             background-color: #7B2CBF !important;
         }
-        /* Changes the moving handle/thumb color */
+        
+        /* 2. Force the moving handle/thumb dot to be purple */
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
             background-color: #7B2CBF !important;
             border-color: #7B2CBF !important;
-            box-shadow: 0px 0px 4px rgba(123, 44, 191, 0.4);
+            box-shadow: 0px 0px 4px rgba(123, 44, 191, 0.4) !important;
         }
     </style>
 """, unsafe_allow_html=True)
