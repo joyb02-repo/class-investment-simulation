@@ -19,17 +19,13 @@ if "has_submitted" not in st.session_state:
 if "companies" not in st.session_state:
     st.session_state.companies = []
 
-# --- CORE INTERACTIVE UI DESIGN OVERRIDES (CSS) ---
+# --- CLEAN GLOBAL TYPOGRAPHY ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        /* Global Font Normalization */
         html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
             font-family: 'Inter', sans-serif !important;
         }
-        
-        /* Header Workspace Layout */
         .main-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -44,35 +40,6 @@ st.markdown("""
             color: #64748B;
             font-size: 1rem;
         }
-        
-        /* Clean Slider Typography Integration */
-        div[data-testid="stSlider"] label {
-            font-size: 1rem !important;
-            font-weight: 500 !important;
-            color: #1E293B !important;
-            margin-bottom: 0.5rem !important;
-        }
-        
-        /* Premium Slider Elements (Thick track lines and solid knobs) */
-        div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
-            font-weight: 700 !important;
-            color: #2563EB !important;
-        }
-        div[data-testid="stSlider"] > div > div > div {
-            background-color: #2563EB !important;
-            height: 10px !important;              
-            border-radius: 5px !important;
-        }
-        div[data-testid="stSlider"] [role="slider"] {
-            width: 24px !important;              
-            height: 24px !important;
-            background-color: #FFFFFF !important;
-            border: 4px solid #2563EB !important;
-            box-shadow: 0px 3px 6px rgba(37, 99, 235, 0.2);
-            cursor: pointer !important;
-        }
-        
-        /* Layout Metrics Architecture */
         div[data-testid="stMetricValue"] {
             font-size: 2.2rem !important;
             font-weight: 700 !important;
@@ -113,7 +80,7 @@ if not st.session_state.logged_in:
 else:
     st.markdown(f"<div class='main-header'><h1>💼 Portfolio Console</h1><p>Agent Ledger: <b>{st.session_state.username.upper()}</b></p></div>", unsafe_allow_html=True)
     
-    # CASE A: SUBMISSION FINALISED & LOCKED
+    # CASE A: SUBMISSION FINALISED & BLOCKED
     if st.session_state.has_submitted:
         m1, m2, m3 = st.columns(3)
         m1.metric("Available Bank Balance", "$0.00")
@@ -123,18 +90,24 @@ else:
         st.markdown("---")
         st.success("🔒 Your investment portfolio has been finalised. Active modifications are restricted by the ledger admin.")
         
-    # CASE B: ACTIVE CONFIGURATION SESSION
+    # CASE B: UNLOCKED LIVE GAME SESSION
     else:
+        # Create an empty layout container right at the top for our metrics
+        # This guarantees they display first without relying on broken CSS layout rules!
+        top_metrics_container = st.container()
+        
+        st.markdown("---")
+        
         total_allocated = 0.0
         allocations = {}
         
-        # Grid block initialization 
+        # Build a safe, dynamic grid using default clean sliders
         col1, col2 = st.columns(2)
         for idx, company in enumerate(st.session_state.companies):
             with col1 if idx % 2 == 0 else col2:
-                # Built cleanly inside the native widget parameter to protect grid spacing structural alignment
+                # Use a clean, native bold markdown label directly inside the slider parameter
                 amt = st.slider(
-                    label=f"Invest in {company}",
+                    label=f"Invest in **{company}**",
                     min_value=0,
                     max_value=int(st.session_state.starting_balance),
                     step=5000,
@@ -147,58 +120,37 @@ else:
                 
         remaining_balance = st.session_state.starting_balance - total_allocated
         
-        # Enforce metrics header positioning at the top row layout container block
-        st.markdown("""<style>div[data-testid="stVerticalBlock"] > div:nth-child(2) { order: -1; }</style>""", unsafe_allow_html=True)
-        
-        top_container = st.container()
-        with top_container:
+        # --- RENDER TOP METRICS & COLOR CHECKS ---
+        with top_metrics_container:
             m1, m2, m3 = st.columns(3)
             
-            # Dynamic status condition checking and font style color rendering mutations
             if remaining_balance < 0:
-                st.markdown("""
-                    <style>
-                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
-                            color: #DC2626 !important; /* Force Crimson Red when broken budget limits occur */
-                        }
-                    </style>
-                """, unsafe_allow_html=True)
+                # Dynamic CSS trick that targets the metric box text color via basic markdown blocks
+                st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #DC2626 !important; }</style>", unsafe_allow_html=True)
                 
                 m1.metric("Available Bank Balance", f"-${abs(remaining_balance):,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 m3.metric("Deficit Check", f"${abs(remaining_balance):,.00f}", delta="OVER BUDGET", delta_color="inverse")
+                
                 st.error(f"🚨 Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
-            elif remaining_balance > 0:
-                st.markdown("""
-                    <style>
-                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
-                            color: #16A34A !important; /* Force Emerald Green when cash remains safe */
-                        }
-                    </style>
-                """, unsafe_allow_html=True)
+            else:
+                # Dynamic CSS trick to force safe/positive money into a premium emerald green look
+                st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #16A34A !important; }</style>", unsafe_allow_html=True)
                 
                 m1.metric("Available Bank Balance", f"${remaining_balance:,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
-                m3.metric("Ledger Status", "PENDING", delta="UNALLOCATED FUNDS", delta_color="off")
-                st.warning(f"⚠️ Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
-                is_ready = False
-            else:
-                st.markdown("""
-                    <style>
-                        div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
-                            color: #16A34A !important; /* Balanced budget remains safety green */
-                        }
-                    </style>
-                """, unsafe_allow_html=True)
                 
-                m1.metric("Available Bank Balance", "$0.00")
-                m2.metric("Investment Total", f"${st.session_state.starting_balance:,.00f}")
-                m3.metric("Ledger Status", "READY", delta="BALANCED", delta_color="normal")
-                st.success(f"✅ Complete assignment of your ${st.session_state.starting_balance:,.00f} budget validated.")
-                is_ready = True
-                
-            st.markdown("---")
+                if remaining_balance > 0:
+                    m3.metric("Ledger Status", "PENDING", delta="UNALLOCATED FUNDS", delta_color="off")
+                    st.warning(f"⚠️ Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
+                    is_ready = False
+                else:
+                    m3.metric("Ledger Status", "READY", delta="BALANCED", delta_color="normal")
+                    st.success(f"✅ Complete assignment of your ${st.session_state.starting_balance:,.00f} budget validated.")
+                    is_ready = True
+
+        st.markdown("---")
 
         if st.button("Finalise Investment", type="primary", use_container_width=True, disabled=not is_ready):
             with st.spinner("Encrypting allocations and signing to master node..."):
