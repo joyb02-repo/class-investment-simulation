@@ -47,29 +47,35 @@ st.markdown("""
             font-weight: 700 !important;
         }
         
-        /* --- FOOLPROOF PURPLE SLIDER OVERRIDES --- */
-        /* 1. Force the active track line gradient from red to purple */
-        div[data-testid="stSlider"] [data-baseweb="slider"] [style*="background"] {
-            background: linear-gradient(to right, rgb(123, 44, 191) 0%, rgb(123, 44, 191) var(--slider-progress, 100%), rgb(238, 242, 246) var(--slider-progress, 100%)) !important;
-        }
-        
-        /* 2. Catch and override the specific fallback element color style */
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="rgb(255, 75, 75)"] {
-            background-color: rgb(123, 44, 191) !important;
-            background: rgb(123, 44, 191) !important;
+        /* --- BULLETPROOF PURPLE SLIDER ACCENTS --- */
+        /* 1. Force the active track line fill to be purple instead of red */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[data-disabled="false"] > div > div[style*="background-color: rgb(255, 75, 75)"],
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[data-disabled="false"] > div > div[style*="background: rgb(255, 75, 75)"],
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[data-disabled="false"] div:nth-child(2) {
+            background-color: #7B2CBF !important;
+            background: #7B2CBF !important;
         }
 
-        /* 3. Keep the moving handle/thumb dot purple */
+        /* 2. Turn the moving handle/thumb dot purple */
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
             background-color: #7B2CBF !important;
             border-color: #7B2CBF !important;
             box-shadow: 0px 0px 4px rgba(123, 44, 191, 0.4) !important;
         }
 
-        /* 4. Keep the numbers changing on top of the slider purple */
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] div {
+        /* 3. Turn the numeric values changing above the handle purple */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] div,
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] ~ div {
             color: #7B2CBF !important;
             font-weight: 600 !important;
+        }
+
+        /* 4. Keep the disabled slider completely grayed out exactly as expected */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[data-disabled="true"] > div > div,
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[data-disabled="true"] div {
+            background-color: #E2E8F0 !important;
+            background: #E2E8F0 !important;
+            color: #94A3B8 !important;
         }
     </style>
 """, unsafe_allow_html=True)
