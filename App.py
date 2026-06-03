@@ -53,29 +53,12 @@ st.markdown("""
 if not st.session_state.logged_in:
     st.markdown("<div class='main-header'><h1>🔐 SharkTank Investment Portal</h1><p>Enter your credentials provided by the ledger admin</p></div>", unsafe_allow_html=True)
     
-    # Pre-fetch company names so the dropdown is ready when they arrive
-    if not st.session_state.companies:
-        try:
-            response = requests.get(WEB_APP_URL, params={"username": "", "password": ""}, timeout=5)
-            res_data = response.json()
-            if res_data.get("status") == "success" and res_data.get("companies"):
-                st.session_state.companies = res_data.get("companies")
-        except:
-            st.session_state.companies = ["Company A", "Company B", "Company C", "Company D", "Company E", "Company F"]
-
     username_input = st.text_input("Username").strip().lower()
     password_input = st.text_input("Password", type="password")
     
-    own_company_selection = st.selectbox(
-        "Select your own company (Investment in this selection will be restricted)", 
-        options=["-- Select Your Company --"] + st.session_state.companies
-    )
-    
     if st.button("Access Dashboard", use_container_width=True, type="primary"):
         if not username_input or not password_input:
-            st.warning("Please enter both username and password fields.")
-        elif own_company_selection == "-- Select Your Company --":
-            st.error("⚠️ You must declare your own company from the dropdown to continue.")
+            st.warning("Please enter both fields.")
         else:
             with st.spinner("Authenticating credential access parameters..."):
                 try:
@@ -86,10 +69,12 @@ if not st.session_state.logged_in:
                     if response.status_code == 200 and res_data.get("status") == "success" and res_data.get("auth") == True:
                         st.session_state.username = username_input
                         st.session_state.starting_balance = float(res_data.get("balance", 0.0))
+                        st.session_state.user_own_company = res_data.get("restricted", "") # Received from backend tab column 4
                         st.session_state.has_submitted = res_data.get("hasSubmitted", False)
-                        st.session_state.user_own_company = own_company_selection
+                        
                         if res_data.get("companies"):
                             st.session_state.companies = res_data.get("companies")
+                            
                         st.session_state.logged_in = True
                         st.rerun()
                     else:
@@ -121,15 +106,16 @@ else:
         total_allocated = 0.0
         allocations = {}
         
-        # Build the dynamic multi-column placement matrix
+        # Build the dynamic clean layout grid
         col1, col2 = st.columns(2)
         for idx, company in enumerate(st.session_state.companies):
             with col1 if idx % 2 == 0 else col2:
-                if company == st.session_state.user_own_company:
+                # Rule check: Lock slider completely if it matches the assigned restricted company string from the sheet
+                if company.strip().lower() == st.session_state.user_own_company.strip().lower():
                     amt = st.slider(
-                        label=f"Invest in **{company}** (Your Company - Restricted)",
+                        label=f"Invest in **{company}** (Your Assigned Company - Restricted)",
                         min_value=0,
-                        max_value=5000,  # Safe range to bypass Streamlit constraint
+                        max_value=5000,
                         step=5000,
                         value=0,
                         format="$%d",
