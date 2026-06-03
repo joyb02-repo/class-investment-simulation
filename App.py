@@ -113,7 +113,7 @@ else:
                 # Rule check: Lock slider completely if it matches the assigned restricted company string from the sheet
                 if company.strip().lower() == st.session_state.user_own_company.strip().lower():
                     amt = st.slider(
-                        label=f"Invest in **{company}** (Your Assigned Company - Restricted)",
+                        label=f"Invest in **{company}** (Restricted)",
                         min_value=0,
                         max_value=5000,
                         step=5000,
