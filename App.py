@@ -26,11 +26,14 @@ if "user_own_company" not in st.session_state:
 def render_top_logo():
     logo_path = "logo.png"
     if os.path.exists(logo_path):
-        st.image(logo_path, width=150)
+        # Using columns to perfectly guarantee horizontal centering across all screen sizes
+        left, center, right = st.columns([1, 2, 1])
+        with center:
+            st.image(logo_path, width=150)
     else:
         st.markdown("<h2 style='text-align: center; color: #8B5CF6; letter-spacing: 2px; font-weight:700; margin-bottom:0;'>SHARK TANK</h2>", unsafe_allow_html=True)
 
-# --- CORE PREMIUM LIGHT UI SYSTEM OVERRIDES (CSS) ---
+# --- CORE PREMIUM THEME OVERRIDES (CSS) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -39,41 +42,41 @@ st.markdown("""
         html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
             font-family: 'Inter', sans-serif !important;
         }
-        
-        /* Center Logo Automatically */
-        [data-testid="stImage"] {
-            margin: 0 auto !important;
-            display: block;
-        }
 
-        /* Workspace Header Elements */
+        /* Workspace Header Elements (Adaptive Theme Purple) */
         .main-header {
             text-align: center;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             margin-bottom: 2rem;
         }
         .main-header h1 {
             font-weight: 700;
             letter-spacing: -0.05rem;
-            color: #1E293B;
+            color: #7C3AED !important; /* Visible on both dark and light modes */
             margin-bottom: 0.2rem;
             font-size: 1.8rem;
         }
         .main-header p {
-            color: #64748B;
+            color: #8B5CF6;
             font-size: 1rem;
+            opacity: 0.9;
         }
         
-        /* TARGETED SLIDER STYLING - Forces Purple Handles and Tracks Only */
+        /* TARGETED SLIDER STYLING */
+        /* Active Value Above Slider Thumb */
         div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
             font-weight: 700 !important;
             color: #8B5CF6 !important;
         }
+        
+        /* Main Slider Colored Track Track */
         div[data-testid="stSlider"] > div > div > div {
             background-color: #8B5CF6 !important;
             height: 8px !important;              
             border-radius: 9999px !important;
         }
+        
+        /* Slider Thumb Handle */
         div[data-testid="stSlider"] [role="slider"] {
             width: 20px !important;              
             height: 20px !important;
@@ -82,16 +85,28 @@ st.markdown("""
             box-shadow: 0px 2px 4px rgba(139, 92, 246, 0.3);
         }
         
-        /* Enforces slider scale markers to stay dark gray, stopping the red color bleed */
-        div[data-testid="stSlider"] div[data-testid="styledTickBar"] div {
+        /* FIX: Remove the purple background highlight on min/max scale tick overlays */
+        div[data-testid="stSlider"] div[data-testid="styledTickBar"] div,
+        div[data-testid="stSlider"] div[class*="st-"] {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+        
+        /* Enforces min/max numeric values ($0, $150k) to stay clean and gray */
+        div[data-testid="stSlider"] p[data-testid="stWidgetLabel"] + div div {
             color: #64748B !important;
             font-weight: 500 !important;
         }
         
-        /* Targets the text labels inside the container card block */
+        /* FIX: Stop the red color bleed on track selections and tooltips */
+        div[data-testid="stSlider"] div {
+            border-color: transparent !important;
+        }
+        
+        /* Labels Inside Container Card Block */
         div[data-testid="stVerticalBlockBorderWrapper"] label p {
             font-size: 1.05rem !important;
-            color: #1E293B !important;
+            font-weight: 600 !important;
         }
         
         /* Custom Curving Container Box Injection */
@@ -110,7 +125,6 @@ st.markdown("""
         }
         div[data-testid="stMetricLabel"] {
             font-weight: 600 !important;
-            color: #475569 !important;
         }
         
         /* Premium Curved Theme Primary Actions Button */
@@ -225,7 +239,7 @@ else:
             m1, m2, m3 = st.columns(3)
             
             if remaining_balance < 0:
-                # DEEP DEFCIT RED: Strictly targets metric block text values without bleeding into sliders
+                # DEEP DEFICIT RED: Targets only the bank balance metric block
                 st.markdown("""
                     <style>
                         div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
@@ -241,7 +255,7 @@ else:
                 st.error(f"Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             else:
-                # VIBRANT ACCENT PURPLE: Formats normal balance metrics safely
+                # VIBRANT ACCENT PURPLE: Formats default state
                 st.markdown("""
                     <style>
                         div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
