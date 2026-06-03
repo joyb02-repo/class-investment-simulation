@@ -19,17 +19,17 @@ if "has_submitted" not in st.session_state:
 if "companies" not in st.session_state:
     st.session_state.companies = []
 
-# --- INJECT INTERACTIVE UI DESIGN IMPROVEMENTS (CSS) ---
+# --- CORE INTERACTIVE UI DESIGN OVERRIDES (CSS) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        /* Global Typography Override */
+        /* Global Font Normalization */
         html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
             font-family: 'Inter', sans-serif !important;
         }
         
-        /* Professional Title Formatting */
+        /* Header Workspace Layout */
         .main-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -45,38 +45,36 @@ st.markdown("""
             font-size: 1rem;
         }
         
-        /* Custom Inline Slider Labels */
-        .slider-label {
+        /* Clean Slider Typography Integration */
+        div[data-testid="stSlider"] label {
             font-size: 1rem !important;
-            font-weight: 400 !important;
+            font-weight: 500 !important;
             color: #1E293B !important;
-            margin-bottom: -10px !important;
-            display: block;
-        }
-        .slider-label strong {
-            font-weight: 700 !important;
+            margin-bottom: 0.5rem !important;
         }
         
-        /* Slider Track and Handle Structural Polish */
+        /* Premium Slider Elements (Thick track lines and solid knobs) */
         div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
-            font-weight: 600 !important;
-            color: #1E293B !important;
+            font-weight: 700 !important;
+            color: #2563EB !important;
         }
         div[data-testid="stSlider"] > div > div > div {
             background-color: #2563EB !important;
-            height: 8px !important;              
+            height: 10px !important;              
+            border-radius: 5px !important;
         }
         div[data-testid="stSlider"] [role="slider"] {
-            width: 22px !important;              
-            height: 22px !important;
+            width: 24px !important;              
+            height: 24px !important;
             background-color: #FFFFFF !important;
-            border: 3px solid #2563EB !important;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
+            border: 4px solid #2563EB !important;
+            box-shadow: 0px 3px 6px rgba(37, 99, 235, 0.2);
+            cursor: pointer !important;
         }
         
-        /* Standard Header Metric Text Sizing */
+        /* Layout Metrics Architecture */
         div[data-testid="stMetricValue"] {
-            font-size: 2rem !important;
+            font-size: 2.2rem !important;
             font-weight: 700 !important;
         }
     </style>
@@ -115,7 +113,7 @@ if not st.session_state.logged_in:
 else:
     st.markdown(f"<div class='main-header'><h1>💼 Portfolio Console</h1><p>Agent Ledger: <b>{st.session_state.username.upper()}</b></p></div>", unsafe_allow_html=True)
     
-    # CASE A: SUBMISSION FINALISED & BLOCKED
+    # CASE A: SUBMISSION FINALISED & LOCKED
     if st.session_state.has_submitted:
         m1, m2, m3 = st.columns(3)
         m1.metric("Available Bank Balance", "$0.00")
@@ -125,17 +123,16 @@ else:
         st.markdown("---")
         st.success("🔒 Your investment portfolio has been finalised. Active modifications are restricted by the ledger admin.")
         
-    # CASE B: UNLOCKED LIVE GAME SESSION
+    # CASE B: ACTIVE CONFIGURATION SESSION
     else:
         total_allocated = 0.0
         allocations = {}
         
-        # Build the dynamic grid layout cleanly
+        # Grid block initialization 
         col1, col2 = st.columns(2)
         for idx, company in enumerate(st.session_state.companies):
             with col1 if idx % 2 == 0 else col2:
-                # Custom HTML wrapper injection to fix the broken alignment and gap sizing
-                st.markdown(f"<span class='slider-label'>Invest in <strong>{company}</strong></span>", unsafe_allow_html=True)
+                # Built cleanly inside the native widget parameter to protect grid spacing structural alignment
                 amt = st.slider(
                     label=f"Invest in {company}",
                     min_value=0,
@@ -143,27 +140,26 @@ else:
                     step=5000,
                     value=0,
                     format="$%d",
-                    key=f"slider_{company}",
-                    label_visibility="collapsed" 
+                    key=f"slider_{company}"
                 )
                 allocations[company] = float(amt)
                 total_allocated += float(amt)
                 
         remaining_balance = st.session_state.starting_balance - total_allocated
         
-        # Enforce metrics box positioning at the top level of the app framework layout
+        # Enforce metrics header positioning at the top row layout container block
         st.markdown("""<style>div[data-testid="stVerticalBlock"] > div:nth-child(2) { order: -1; }</style>""", unsafe_allow_html=True)
         
         top_container = st.container()
         with top_container:
             m1, m2, m3 = st.columns(3)
             
+            # Dynamic status condition checking and font style color rendering mutations
             if remaining_balance < 0:
-                # Target the exact position row structure of metric column 1 to force deep crimson red text
                 st.markdown("""
                     <style>
                         div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
-                            color: #DC2626 !important;
+                            color: #DC2626 !important; /* Force Crimson Red when broken budget limits occur */
                         }
                     </style>
                 """, unsafe_allow_html=True)
@@ -174,11 +170,10 @@ else:
                 st.error(f"🚨 Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             elif remaining_balance > 0:
-                # Target the exact position row structure of metric column 1 to force deep emerald green text
                 st.markdown("""
                     <style>
                         div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
-                            color: #16A34A !important;
+                            color: #16A34A !important; /* Force Emerald Green when cash remains safe */
                         }
                     </style>
                 """, unsafe_allow_html=True)
@@ -189,11 +184,10 @@ else:
                 st.warning(f"⚠️ Allocation required: Complete deployment of remaining ${remaining_balance:,.00f} to finalize.")
                 is_ready = False
             else:
-                # Target the exact position row structure of metric column 1 to force deep emerald green text
                 st.markdown("""
                     <style>
                         div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] {
-                            color: #16A34A !important;
+                            color: #16A34A !important; /* Balanced budget remains safety green */
                         }
                     </style>
                 """, unsafe_allow_html=True)
