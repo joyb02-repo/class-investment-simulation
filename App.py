@@ -22,78 +22,79 @@ if "companies" not in st.session_state:
 if "user_own_company" not in st.session_state:
     st.session_state.user_own_company = ""
 
-# --- LOGO RENDERING ENGINE ---
+# --- CENTRED LOGO WITH PURPLE CHROMATIC FILTER ---
 def render_top_logo():
     logo_path = "logo.png"
     if os.path.exists(logo_path):
-        # Setup clean 3-column matrix grid to lock precise horizontal centering
-        left, center, right = st.columns([1, 1.8, 1])
+        # Balanced 3-column layout locks structural alignment perfectly across mobile and desktop
+        left, center, right = st.columns([1, 1.5, 1])
         with center:
-            # Injecting an inline hardware wrapper to tint the gray png to match the purple palette
+            # Color matrix formula shifts the base image gray directly into matching theme purple
             st.markdown("""
-                <div style="text-align: center; filter: invert(41%) sepia(82%) saturate(3141%) hue-rotate(242deg) brightness(98%) contrast(95%);">
-                    <img src="app/static/logo.png" width="150" style="display: block; margin: 0 auto;"/>
+                <div style="text-align: center; margin-bottom: 10px; filter: invert(34%) sepia(85%) saturate(1915%) hue-rotate(253deg) brightness(96%) contrast(97%);">
+                    <img src="app/static/logo.png" width="160" style="display: block; margin: 0 auto;"/>
                 </div>
             """, unsafe_allow_html=True)
     else:
-        st.markdown("<h2 style='text-align: center; color: #8B5CF6; letter-spacing: 2px; font-weight:700; margin-bottom:0;'>SHARK TANK</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #9333EA; letter-spacing: 2px; font-weight:700; margin-bottom:0;'>SHARK TANK</h2>", unsafe_allow_html=True)
 
-# --- CORE STABLE RE-ENGINEERED PURPLE THEME OVERRIDES (CSS) ---
+# --- ENGINE UI SYSTEM OVERRIDES (CSS) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        /* Global Typography Normalization */
+        /* Global Font Normalization */
         html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
             font-family: 'Inter', sans-serif !important;
         }
 
-        /* Workspace Adaptive Header Typography */
+        /* Adaptive Header Typography (High visibility across Light/Dark modes) */
         .main-header {
             text-align: center;
-            margin-top: 1rem;
-            margin-bottom: 2rem;
+            margin-top: 0.2rem;
+            margin-bottom: 1.8rem;
         }
         .main-header h1 {
             font-weight: 700;
             letter-spacing: -0.05rem;
-            color: #7C3AED !important; /* Visible on both Dark and Light setups */
+            color: #9333EA !important; 
             margin-bottom: 0.2rem;
-            font-size: 1.8rem;
+            font-size: 1.9rem;
         }
         .main-header p {
-            color: #8B5CF6;
+            color: #A855F7;
             font-size: 1rem;
-            opacity: 0.9;
+            font-weight: 500;
         }
         
-        /* FIXED SLIDER OVERRIDES */
-        /* Active Value Counter Above Thumb Handle */
+        /* THEME SLIDER STRUCTURAL INTEGRITY PATCHES */
+        /* Targets active amount text strings, enforcing theme color */
         div[data-testid="stSlider"] [data-testid="stThumbvalue"] {
             font-weight: 700 !important;
-            color: #8B5CF6 !important;
+            color: #9333EA !important;
         }
         
-        /* Main Interactive Track Layer */
+        /* Re-enforces baseline track line sizes to fix invisible rendering anomalies */
         div[data-testid="stSlider"] > div > div > div {
-            background: #8B5CF6 !important;
-            background-color: #8B5CF6 !important;
+            background-color: #9333EA !important;
+            background: #9333EA !important;
             height: 8px !important;              
             border-radius: 9999px !important;
         }
         
-        /* Circular Thumb Drag Selector Handle */
+        /* Re-enforces standard slider knob diameter bounds and fixes square distortion shapes */
         div[data-testid="stSlider"] [role="slider"] {
             width: 22px !important;              
             height: 22px !important;
             background-color: #FFFFFF !important;
-            border: 4px solid #8B5CF6 !important;
-            box-shadow: 0px 2px 5px rgba(139, 92, 246, 0.4) !important;
+            border: 4px solid #9333EA !important;
+            border-radius: 50% !important;
+            box-shadow: 0px 2px 5px rgba(147, 51, 234, 0.4) !important;
             opacity: 1 !important;
             visibility: visible !important;
         }
         
-        /* Wipes away the native blue hover capsule backgrounds behind min/max tick markers */
+        /* Erases background highlights and color-burn issues on bottom slider boundaries */
         div[data-testid="stSlider"] div[data-testid="styledTickBar"] div,
         div[data-testid="stSlider"] div[class*="st-"] {
             background-color: transparent !important;
@@ -101,27 +102,28 @@ st.markdown("""
             border-radius: 0px !important;
         }
         
-        /* Sets bottom boundary markers ($0, $150k) to uniform modern neutral gray */
+        /* Sets the min/max value labels ($0, $150k) to a clear, stable neutral gray */
         div[data-testid="stSlider"] p[data-testid="stWidgetLabel"] + div div {
             color: #64748B !important;
             font-weight: 500 !important;
         }
         
-        /* Dynamic Sliders Card Layout Base Wrapper */
+        /* Enclosed Curved Background Card Layout behind Sliders */
         div[data-testid="stVerticalBlockBorderWrapper"]:has(div[id^="slider_"]) {
-            background-color: rgba(139, 92, 246, 0.04) !important;
-            border: 1px solid rgba(139, 92, 246, 0.15) !important;
+            background-color: rgba(147, 51, 234, 0.04) !important;
+            border: 1px solid rgba(147, 51, 234, 0.15) !important;
             border-radius: 18px !important;
             padding: 28px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
         }
         
-        /* Text Labels inside Workspace Card Layout Blocks */
+        /* Company text header layout labels inside card blocks */
         div[data-testid="stVerticalBlockBorderWrapper"] label p {
             font-size: 1.05rem !important;
             font-weight: 600 !important;
         }
         
-        /* Global Platform Metric System Layout Configuration */
+        /* Main metric layout parameters layout */
         div[data-testid="stMetricValue"] {
             font-size: 2.2rem !important;
             font-weight: 700 !important;
@@ -131,9 +133,9 @@ st.markdown("""
             font-weight: 600 !important;
         }
         
-        /* Premium Themed Action Confirmation Buttons */
+        /* Premium Action Buttons */
         div.stButton > button[kind="primary"] {
-            background-color: #8B5CF6 !important;
+            background-color: #9333EA !important;
             border: none !important;
             color: white !important;
             font-weight: 600 !important;
@@ -142,8 +144,8 @@ st.markdown("""
             transition: all 0.2s ease;
         }
         div.stButton > button[kind="primary"]:hover {
-            background-color: #7C3AED !important;
-            box-shadow: 0px 4px 12px rgba(124, 58, 237, 0.3);
+            background-color: #7E22CE !important;
+            box-shadow: 0px 4px 12px rgba(126, 34, 206, 0.35);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -207,7 +209,7 @@ else:
         total_allocated = 0.0
         allocations = {}
         
-        # Wrapped container block background layer behind sliders
+        # Safe border block wrapping layout clean behind workspace sliders
         with st.container(border=True):
             col1, col2 = st.columns(2)
             for idx, company in enumerate(st.session_state.companies):
@@ -243,7 +245,7 @@ else:
             m1, m2, m3 = st.columns(3)
             
             if remaining_balance < 0:
-                # DEEP DEFICIT RED: Targets only the bank balance metric block
+                # DEEP DEFICIT RED: Targets only the bank balance metric block value cleanly
                 st.markdown("""
                     <style>
                         div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
@@ -259,11 +261,11 @@ else:
                 st.error(f"Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             else:
-                # VIBRANT ACCENT PURPLE: Formats normal state metrics safely
+                # VIBRANT ACCENT PURPLE: Formats default metric tracking state
                 st.markdown("""
                     <style>
                         div[data-testid="stMetricBlock"]:nth-of-type(1) div[data-testid="stMetricValue"] > div {
-                            color: #8B5CF6 !important;
+                            color: #9333EA !important;
                         }
                     </style>
                 """, unsafe_allow_html=True)
