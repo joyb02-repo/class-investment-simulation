@@ -18,6 +18,10 @@ if "has_submitted" not in st.session_state:
     st.session_state.has_submitted = False
 if "companies" not in st.session_state:
     st.session_state.companies = []
+if "user_own_company" not in st.session_state:
+    st.session_state.user_own_company = ""
+if "login_step" not in st.session_state:
+    st.session_state.login_step = "fetch_initial"
 
 # --- CLEAN GLOBAL TYPOGRAPHY ---
 st.markdown("""
@@ -47,15 +51,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- LOGIN SCREEN ---
+# --- LOGIN ENGINE ---
 if not st.session_state.logged_in:
     st.markdown("<div class='main-header'><h1>🔐 SharkTank Investment Portal</h1><p>Enter your credentials provided by the ledger admin</p></div>", unsafe_allow_html=True)
     
+    # Pre-fetch company names so the dropdown is ready when they arrive
+    if not st.session_state.companies:
+        try:
+            # Send an anonymous ping just to grab the dynamic sheet headers
+            response = requests.get(WEB_APP_URL, params={"username": "", "password": ""}, timeout=5)
+            res_data = response.json()
+            if res_data.get("status") == "success" and res_data.get("companies"):
+                st.session_state.companies = res_data.get("companies")
+        except:
+            st.session_state.companies = ["Company A", "Company B", "Company C", "Company D", "Company E", "Company F"]
+
     username_input = st.text_input("Username").strip().lower()
     password_input = st.text_input("Password", type="password")
     
+    # New Dropdown Selector Box 
+    own_company_selection = st.selectbox(
+        "Select your own company (Investment in this selection will be restricted)", 
+        options=["-- Select Your Company --"] + st.session_state.companies
+    )
+    
     if st.button("Access Dashboard", use_container_width=True, type="primary"):
-        if username_input and password_input:
+        if not username_input or not password_input:
+            st.warning("Please enter both username and password fields.")
+        elif own_company_selection == "-- Select Your Company --":
+            st.error("⚠️ You must declare your own company from the dropdown to continue.")
+        else:
             with st.spinner("Authenticating credential access parameters..."):
                 try:
                     params = {"username": username_input, "password": password_input}
@@ -66,15 +91,15 @@ if not st.session_state.logged_in:
                         st.session_state.username = username_input
                         st.session_state.starting_balance = float(res_data.get("balance", 0.0))
                         st.session_state.has_submitted = res_data.get("hasSubmitted", False)
-                        st.session_state.companies = res_data.get("companies", ["Company A", "Company B"])
+                        st.session_state.user_own_company = own_company_selection
+                        if res_data.get("companies"):
+                            st.session_state.companies = res_data.get("companies")
                         st.session_state.logged_in = True
                         st.rerun()
                     else:
                         st.error("Access Denied. Invalid username or password verified by sheet.")
                 except Exception as e:
                     st.error(f"Failed to communicate with authentication servers: {e}")
-        else:
-            st.warning("Please enter both fields.")
 
 # --- LIVE PORTFOLIO ---
 else:
@@ -92,8 +117,7 @@ else:
         
     # CASE B: UNLOCKED LIVE GAME SESSION
     else:
-        # Create an empty layout container right at the top for our metrics
-        # This guarantees they display first without relying on broken CSS layout rules!
+        # Layout metrics container pinned safely at the absolute top layout
         top_metrics_container = st.container()
         
         st.markdown("---")
@@ -101,20 +125,32 @@ else:
         total_allocated = 0.0
         allocations = {}
         
-        # Build a safe, dynamic grid using default clean sliders
+        # Build the dynamic multi-column placement matrix
         col1, col2 = st.columns(2)
         for idx, company in enumerate(st.session_state.companies):
             with col1 if idx % 2 == 0 else col2:
-                # Use a clean, native bold markdown label directly inside the slider parameter
-                amt = st.slider(
-                    label=f"Invest in **{company}**",
-                    min_value=0,
-                    max_value=int(st.session_state.starting_balance),
-                    step=5000,
-                    value=0,
-                    format="$%d",
-                    key=f"slider_{company}"
-                )
+                # Rule check: If this is their own company, completely lock it out
+                if company == st.session_state.user_own_company:
+                    amt = st.slider(
+                        label=f"Invest in **{company}** (Your Company - Restricted)",
+                        min_value=0,
+                        max_value=0,
+                        step=5000,
+                        value=0,
+                        format="$%d",
+                        key=f"slider_{company}",
+                        disabled=True # Locks the component from receiving input events
+                    )
+                else:
+                    amt = st.slider(
+                        label=f"Invest in **{company}**",
+                        min_value=0,
+                        max_value=int(st.session_state.starting_balance),
+                        step=5000,
+                        value=0,
+                        format="$%d",
+                        key=f"slider_{company}"
+                    )
                 allocations[company] = float(amt)
                 total_allocated += float(amt)
                 
@@ -125,9 +161,7 @@ else:
             m1, m2, m3 = st.columns(3)
             
             if remaining_balance < 0:
-                # Dynamic CSS trick that targets the metric box text color via basic markdown blocks
                 st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #DC2626 !important; }</style>", unsafe_allow_html=True)
-                
                 m1.metric("Available Bank Balance", f"-${abs(remaining_balance):,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 m3.metric("Deficit Check", f"${abs(remaining_balance):,.00f}", delta="OVER BUDGET", delta_color="inverse")
@@ -135,9 +169,7 @@ else:
                 st.error(f"🚨 Account overallocated! Adjust your sliders down to balance budget by ${abs(remaining_balance):,.2f}.")
                 is_ready = False
             else:
-                # Dynamic CSS trick to force safe/positive money into a premium emerald green look
                 st.markdown("<style>div[data-testid='stMetricValue'] > div { color: #16A34A !important; }</style>", unsafe_allow_html=True)
-                
                 m1.metric("Available Bank Balance", f"${remaining_balance:,.00f}")
                 m2.metric("Investment Total", f"${total_allocated:,.00f}")
                 
@@ -176,4 +208,5 @@ else:
         st.session_state.starting_balance = 0.0
         st.session_state.has_submitted = False
         st.session_state.companies = []
+        st.session_state.user_own_company = ""
         st.rerun()
