@@ -47,34 +47,33 @@ st.markdown("""
             font-weight: 700 !important;
         }
         
-        /* --- ACCURATE PURPLE SLIDER OVERRIDES --- */
-        /* 1. Force the dragging fill line to be purple by overriding the inline style background */
-        div[data-testid="stSlider"] [data-baseweb="slider"] [data-disabled="false"] > div > div {
-            background: #7B2CBF !important;
-            background-color: #7B2CBF !important;
+        /* --- FOOLPROOF PURPLE SLIDER OVERRIDES --- */
+        /* 1. Force the active track line gradient from red to purple */
+        div[data-testid="stSlider"] [data-baseweb="slider"] [style*="background"] {
+            background: linear-gradient(to right, rgb(123, 44, 191) 0%, rgb(123, 44, 191) var(--slider-progress, 100%), rgb(238, 242, 246) var(--slider-progress, 100%)) !important;
+        }
+        
+        /* 2. Catch and override the specific fallback element color style */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="rgb(255, 75, 75)"] {
+            background-color: rgb(123, 44, 191) !important;
+            background: rgb(123, 44, 191) !important;
         }
 
-        /* 2. Double-check selector to catch any alternate slider track states */
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background-color: rgb(255, 75, 75)"],
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background: rgb(255, 75, 75)"] {
-            background: #7B2CBF !important;
-            background-color: #7B2CBF !important;
-        }
-
-        /* 3. Keeps the moving handle/thumb dot purple */
+        /* 3. Keep the moving handle/thumb dot purple */
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
             background-color: #7B2CBF !important;
             border-color: #7B2CBF !important;
             box-shadow: 0px 0px 4px rgba(123, 44, 191, 0.4) !important;
         }
 
-        /* 4. Keeps the numbers changing on top of the slider purple */
+        /* 4. Keep the numbers changing on top of the slider purple */
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] div {
             color: #7B2CBF !important;
             font-weight: 600 !important;
         }
     </style>
 """, unsafe_allow_html=True)
+
 # --- LOGIN ENGINE ---
 if not st.session_state.logged_in:
     st.markdown("<div class='main-header'><h1>🔐 SharkTank Investment Portal</h1><p>Enter your credentials provided by the ledger admin</p></div>", unsafe_allow_html=True)
