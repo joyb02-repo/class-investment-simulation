@@ -48,27 +48,33 @@ st.markdown("""
         }
         
         /* --- ACCURATE PURPLE SLIDER OVERRIDES --- */
-        /* 1. Turns the dragging fill line purple */
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[data-testid="stSliderTickBar"] ~ div {
-            background-color: #7B2CBF !important;
+        /* 1. Force the dragging fill line to be purple by overriding the inline style background */
+        div[data-testid="stSlider"] [data-baseweb="slider"] [data-disabled="false"] > div > div {
             background: #7B2CBF !important;
+            background-color: #7B2CBF !important;
         }
 
-        /* 2. Turns the moving handle/thumb dot purple */
+        /* 2. Double-check selector to catch any alternate slider track states */
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background-color: rgb(255, 75, 75)"],
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background: rgb(255, 75, 75)"] {
+            background: #7B2CBF !important;
+            background-color: #7B2CBF !important;
+        }
+
+        /* 3. Keeps the moving handle/thumb dot purple */
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
             background-color: #7B2CBF !important;
             border-color: #7B2CBF !important;
             box-shadow: 0px 0px 4px rgba(123, 44, 191, 0.4) !important;
         }
 
-        /* 3. Turns the numbers changing on top of the slider purple */
+        /* 4. Keeps the numbers changing on top of the slider purple */
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] div {
             color: #7B2CBF !important;
             font-weight: 600 !important;
         }
     </style>
 """, unsafe_allow_html=True)
-
 # --- LOGIN ENGINE ---
 if not st.session_state.logged_in:
     st.markdown("<div class='main-header'><h1>🔐 SharkTank Investment Portal</h1><p>Enter your credentials provided by the ledger admin</p></div>", unsafe_allow_html=True)
