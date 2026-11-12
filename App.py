@@ -23,6 +23,7 @@ DEFAULTS = {
     "starting_balance": 0.0,
     "has_submitted": False,
     "companies": [],
+    "descriptions": {},
     "user_own_company": "",
 }
 for key, value in DEFAULTS.items():
@@ -330,6 +331,7 @@ if not st.session_state.logged_in:
 
                         if res_data.get("companies"):
                             st.session_state.companies = res_data.get("companies")
+                        st.session_state.descriptions = res_data.get("descriptions") or {}
 
                         st.session_state.logged_in = True
                         st.rerun()
@@ -380,49 +382,54 @@ else:
         total_allocated = 0.0
         allocations = {}
 
-        # Dynamic company grid
-        col1, col2 = st.columns(2)
-        for idx, company in enumerate(st.session_state.companies):
-            with col1 if idx % 2 == 0 else col2:
-                is_restricted = company.strip().lower() == st.session_state.user_own_company.strip().lower()
+        # Dynamic company grid: two cards per row so the sliders line up
+        companies = st.session_state.companies
+        descriptions = st.session_state.descriptions
+        for row_start in range(0, len(companies), 2):
+            cols = st.columns(2)
+            for offset, company in enumerate(companies[row_start:row_start + 2]):
+                with cols[offset]:
+                    is_restricted = company.strip().lower() == st.session_state.user_own_company.strip().lower()
 
-                with st.container(border=True):
-                    if is_restricted:
-                        st.markdown(
-                            f"<div class='co-name'>{esc(company)}<span class='co-tag'>Your company</span></div>"
-                            "<div class='co-note'>You can't invest in your own company.</div>",
-                            unsafe_allow_html=True,
-                        )
-                        # Rule check: lock slider completely if it matches the restricted company from the sheet
-                        amt = st.slider(
-                            label=f"Invest in {company} (Restricted)",
-                            min_value=0,
-                            max_value=5000,
-                            step=5000,
-                            value=0,
-                            format="$%d",
-                            key=f"slider_{company}",
-                            disabled=True,
-                            label_visibility="collapsed",
-                        )
-                    else:
-                        st.markdown(
-                            f"<div class='co-name'>{esc(company)}</div>"
-                            "<div class='co-note'>Drag to set your investment.</div>",
-                            unsafe_allow_html=True,
-                        )
-                        amt = st.slider(
-                            label=f"Invest in {company}",
-                            min_value=0,
-                            max_value=int(st.session_state.starting_balance),
-                            step=5000,
-                            value=0,
-                            format="$%d",
-                            key=f"slider_{company}",
-                            label_visibility="collapsed",
-                        )
-                    allocations[company] = float(amt)
-                    total_allocated += float(amt)
+                    # Optional company name / description from row 2 of the sheet
+                    note = str(descriptions.get(company, "") or "").strip()
+                    note_html = f"<div class='co-note'>{esc(note)}</div>" if note else ""
+
+                    with st.container(border=True):
+                        if is_restricted:
+                            st.markdown(
+                                f"<div class='co-name'>{esc(company)}<span class='co-tag'>Your company</span></div>{note_html}",
+                                unsafe_allow_html=True,
+                            )
+                            # Rule check: lock slider completely if it matches the restricted company from the sheet
+                            amt = st.slider(
+                                label=f"Invest in {company} (Restricted)",
+                                min_value=0,
+                                max_value=5000,
+                                step=5000,
+                                value=0,
+                                format="$%d",
+                                key=f"slider_{company}",
+                                disabled=True,
+                                label_visibility="collapsed",
+                            )
+                        else:
+                            st.markdown(
+                                f"<div class='co-name'>{esc(company)}</div>{note_html}",
+                                unsafe_allow_html=True,
+                            )
+                            amt = st.slider(
+                                label=f"Invest in {company}",
+                                min_value=0,
+                                max_value=int(st.session_state.starting_balance),
+                                step=5000,
+                                value=0,
+                                format="$%d",
+                                key=f"slider_{company}",
+                                label_visibility="collapsed",
+                            )
+                        allocations[company] = float(amt)
+                        total_allocated += float(amt)
 
         remaining_balance = round(st.session_state.starting_balance - total_allocated, 2)
 
