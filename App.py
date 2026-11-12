@@ -5,6 +5,7 @@ from pathlib import Path
 import requests
 import streamlit as st
 
+from pathlib import Path
 from PIL import Image
 
 ICON_PATH = Path(__file__).parent / "favicon.ico"
