@@ -8,7 +8,7 @@ import streamlit as st
 # Page configuration
 st.set_page_config(
     page_title="SharkTank Investment Simulator",
-    page_icon="🦈",
+    page_icon="🏦",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
