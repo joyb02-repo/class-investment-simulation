@@ -8,7 +8,7 @@ import streamlit as st
 from pathlib import Path
 from PIL import Image
 
-ICON_PATH = Path(__file__).parent / "favicon.png"
+ICON_PATH = Path(__file__).parent / "favicon.ico"
 
 st.set_page_config(
     page_title="SharkTank Investment Simulator",
