@@ -6,7 +6,7 @@ import requests
 import streamlit as st
 
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 ICON_PATH = Path(__file__).parent / "favicon.ico"
 
