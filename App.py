@@ -5,18 +5,23 @@ from pathlib import Path
 import requests
 import streamlit as st
 
-from pathlib import Path
 from PIL import Image
 
 ICON_PATH = Path(__file__).parent / "favicon.ico"
 
+def load_icon(path, brightness=1.8):
+    img = Image.open(path).convert("RGBA")
+    r, g, b, a = img.split()
+    rgb = ImageEnhance.Brightness(Image.merge("RGB", (r, g, b))).enhance(brightness)
+    rgb.putalpha(a)  # keep the original transparency
+    return rgb
+
 st.set_page_config(
     page_title="SharkTank Investment Simulator",
-    page_icon=Image.open(ICON_PATH) if ICON_PATH.exists() else "🦈",
+    page_icon=load_icon(ICON_PATH) if ICON_PATH.exists() else "🦈",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
-
 # 1. WEB APP MACRO LINK
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-9n2foZ57LRw6WM-C6CRYewWTy-cv6ftMZ-dTqSr4zRZ1Q8mvHgT3TPq1CLeVOdrY/exec"
 
