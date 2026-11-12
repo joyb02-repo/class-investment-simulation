@@ -201,8 +201,9 @@ button:focus-visible { outline: 3px solid rgba(123, 44, 191, 0.45) !important; o
     border-color: var(--line);
     border-radius: 12px;
 }
-.co-name { font-weight: 600; color: var(--ink); font-size: 1.02rem; margin-bottom: 0.1rem; }
-.co-note { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.2rem; }
+.co-name { font-weight: 600; color: var(--ink); font-size: 1.02rem; line-height: 1.25; margin: 0; }
+.co-name:last-child { margin-bottom: 1rem; }   /* no description: still space above the slider */
+.co-note { font-size: 0.85rem; color: var(--muted); line-height: 1.3; margin: 0.05rem 0 1rem 0; }
 .co-tag {
     display: inline-block;
     font-size: 0.75rem;
