@@ -95,11 +95,18 @@ st.markdown(
     --bad: #F87171;
 }
 
-html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
+html, body, [data-testid="stAppViewContainer"],
+[class*="st-"]:not([data-testid="stIconMaterial"]):not([class*="material"]) {
     font-family: 'Inter', sans-serif !important;
 }
+/* Keep Streamlit's icon glyphs (password eye, sidebar arrows) on their icon font */
+[data-testid="stIconMaterial"], [class*="material-symbols"], [class*="material-icons"] {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+}
+/* The "Press Enter to submit form" hint collides with the password eye icon */
+[data-testid="InputInstructions"] { display: none !important; }
 [data-testid="stAppViewContainer"], [data-testid="stApp"] { background: var(--paper); }
-.block-container { padding-top: 2rem; padding-bottom: 4rem; max-width: 760px; }
+.block-container { padding-top: 5.5rem; padding-bottom: 4rem; max-width: 760px; }
 #MainMenu, footer { visibility: hidden; }
 
 /* ---------- Logo and headings ---------- */
@@ -108,7 +115,7 @@ html, body, [data-testid="stAppViewContainer"], [class*="st-"] {
 
 .login-head { text-align: center; margin: 1rem 0 1.5rem 0; }
 .login-head .logo { margin: 0 auto 1.4rem auto; }
-.login-head h1 {
+.login-head .login-title {
     font-family: 'Anton', sans-serif !important;
     font-weight: 400;
     font-size: 2.2rem;
@@ -295,7 +302,7 @@ def confirm_dialog(allocations: dict, total: float):
 if not st.session_state.logged_in:
     st.markdown(
         f"<div class='login-head'>{logo_html(150)}"
-        "<h1>Sign in to your ledger</h1>"
+        "<div class='login-title' role='heading' aria-level='1'>Sign in to your ledger</div>"
         "<p>Use the username and password from your ledger admin.</p></div>",
         unsafe_allow_html=True,
     )
